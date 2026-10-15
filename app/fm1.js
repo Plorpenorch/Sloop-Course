@@ -88,6 +88,7 @@ export class VirtualFM1 extends EventTarget {
     this.dispatchEvent(Object.assign(new Event('input'), { what: 'knob', id: role, steps }));
   }
   master(v) { this.post({ t: 'master', v }); }
+  mute(on) { this.muted = on; if (this.gain) this.gain.gain.setTargetAtTime(on ? 0 : 0.9, this.ctx.currentTime, 0.02); }
   releaseAll() {
     for (const h of [...this.held]) { const id = +h.slice(1); if (h[0] === 'b') this.button(id, false); else this.note(id, false); }
   }

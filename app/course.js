@@ -7,6 +7,8 @@ import { buildPanel } from './panel.js';
 import { MODULES, LESSONS } from './lessons.js';
 import { DeviceState } from './state.js';
 import * as FW from './firmware.js';
+import { Mirror } from './mirror.js';
+import { FM1Audio } from './audioin.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -46,6 +48,29 @@ class App {
     this.hw.addEventListener('state', () => { this.updateBar(); this.recheck(); });
     this.hw.addEventListener('midi', (ev) => this.onHwMidi(ev.data));
     $('#connect').onclick = () => this.connectHw();
+    this.mirror = new Mirror(this);
+    this.mirror.addEventListener('status', () => { $('#mirrorstat').textContent = this.mirror.text || ''; });
+    $('#mirrortoggle').onchange = async (e) => {
+      store.set('mirror', e.target.checked);
+      if (e.target.checked) { try { await this.mirror.start(); } catch (err) { e.target.checked = false; this.toast(err.message); } }
+      else this.mirror.stop();
+      $('#mirrorsound').checked = false;
+    };
+    this.usbAudio = new FM1Audio();
+    $('#usbaudio').onchange = async (e) => {
+      if (e.target.checked) {
+        try { const name = await this.usbAudio.start(); this.toast(`Playing your FM-1 (${name}) through this computer. Turn its MASTER knob for the level.`); }
+        catch (err) { e.target.checked = false; this.toast(err.message); }
+      } else this.usbAudio.stop();
+    };
+    $('#mirrorsound').onchange = (e) => this.virt.mute(this.mirror.on && !e.target.checked);
+    this.hw.addEventListener('state', () => {
+      const on = this.hw.state === 'on';
+      $('#mirrorbar').hidden = !on;
+      if (!on && this.mirror.on) { this.mirror.stop(); $('#mirrortoggle').checked = false; }
+      if (!on && this.usbAudio.on && this.hw.state !== 'updating') { this.usbAudio.stop(); $('#usbaudio').checked = false; }
+      if (on && store.get('mirror', false) && !this.mirror.on) { $('#mirrortoggle').checked = true; $('#mirrortoggle').onchange({ target: $('#mirrortoggle') }); }
+    });
     $('#checkwhich').value = this.checkPref;
     $('#checkwhich').onchange = (e) => { this.checkPref = e.target.value; store.set('check', this.checkPref); this.updateBar(); this.recheck(); };
     $('#menubtn').onclick = () => document.body.classList.toggle('navopen');
