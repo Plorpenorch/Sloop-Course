@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SLOOP Course</title>
+<meta name="description" content="Learn SLOOP on the M-VAVE FM-1: an interactive course with the real SLOOP firmware running in the browser, lessons that check your FM-1, and firmware updates.">
+<link rel="icon" href="app/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app/style.css">
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <div id="brand">
+      <div class="logo">S<b>L</b>OOP <span>course</span></div>
+      <div class="sub">for the M-VAVE FM-1</div>
+    </div>
+    <div id="progwrap"><div id="progbar"><div id="progfill"></div></div><div id="progtxt"></div></div>
+    <nav id="nav"></nav>
+    <div id="sidefoot">Free and open source (GPL-3.0). <a href="https://github.com/isod89/sloop-fm1" target="_blank" rel="noopener">SLOOP</a> by isod89, based on <a href="https://github.com/hugelton/Felucca" target="_blank" rel="noopener">Felucca</a> by Leo Kuroshita. Not affiliated with M-VAVE.</div>
+  </aside>
+  <main id="main">
+    <div id="topbar"><button id="menubtn" aria-label="Lessons">☰ Lessons</button><span class="tbtitle">SLOOP course</span><button id="dockbtn" aria-label="FM-1">FM-1 ▸</button></div>
+    <div id="fwbanner" hidden></div>
+    <article id="content"></article>
+  </main>
+  <aside id="dock">
+    <div id="devbar">
+      <span id="vstat" class="chip">Virtual: off</span>
+      <span id="hstat" class="chip">Your FM-1: not connected</span>
+      <button id="connect" class="btn small">Connect your FM-1</button>
+    </div>
+    <div id="devbar2">
+      <span id="checking"></span>
+      <label>Check <select id="checkwhich"><option value="auto">your FM-1 when connected</option><option value="virtual">the virtual FM-1</option></select></label>
+      <label class="tog"><input type="checkbox" id="keystoggle"> Keys</label>
+    </div>
+    <div id="fm1"></div>
+    <p class="docknote">The virtual FM-1 runs SLOOP's firmware, compiled for the browser. Headphones recommended.</p>
+  </aside>
+</div>
+<div id="toast" role="status"></div>
+<script type="module" src="app/course.js"></script>
+</body>
+</html>

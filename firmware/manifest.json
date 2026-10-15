@@ -1,0 +1,13 @@
+{
+  "version": "2.6",
+  "tag": "v2.6",
+  "file": "sloop-2.6.fwsc",
+  "size": 610019,
+  "sha256": "199829bb5b892feae9058158dfed7a137c83ec4d8dfc1223761be1f5614ad6a2",
+  "product": "FM-1_900",
+  "published": null,
+  "source": "https://github.com/isod89/sloop-fm1/releases/download/v2.6/sloop-2.6.fwsc",
+  "release": "https://github.com/isod89/sloop-fm1/releases/tag/v2.6",
+  "prerelease": false,
+  "notes": ""
+}

@@ -1,0 +1,53 @@
+# Nightly: mirror SLOOP's newest release, rebuild the virtual FM-1 and the manual from it, and flag the
+# lessons for review. Plain scripts, no AI. GitHub Pages serves the result.
+name: Sync SLOOP
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Rebuild even if the version did not change"
+        type: boolean
+        default: false
+permissions:
+  contents: write
+  issues: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq clang lld
+          pip install --quiet pillow markdown
+      - name: Check SLOOP's releases
+        id: sync
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 tools/sync.py ${{ inputs.force && '--force' || '' }}
+      - name: Commit
+        if: steps.sync.outputs.new != ''
+        run: |
+          git config user.name "sloop-course-sync"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A firmware app/sloop-emu.wasm app/sloop-emu.version data
+          git commit -m "SLOOP ${{ steps.sync.outputs.new }}: firmware mirrored, virtual FM-1 and manual rebuilt" || exit 0
+          git push
+      - name: Flag the lessons for review
+        if: steps.sync.outputs.new != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW: ${{ steps.sync.outputs.new }}
+        run: |
+          REVIEWED=$(python3 -c "import json;print(json.load(open('data/course.json'))['reviewedFor'])")
+          if [ "$REVIEWED" != "$NEW" ]; then
+            TITLE="SLOOP $NEW is out: lessons need a review"
+            gh issue list --state open --search "$TITLE in:title" --json number --jq length | grep -qv '^0$' && exit 0
+            gh issue create --title "$TITLE" --body "The firmware, the virtual FM-1 and the manual are already on SLOOP $NEW (automatic).
+
+          The lessons were written for SLOOP $REVIEWED. Read *New in $NEW* (course: What's new) and update any lesson whose steps changed, then set \`reviewedFor\` in \`data/course.json\` to $NEW.
+
+          Release: https://github.com/isod89/sloop-fm1/releases"
+          fi
