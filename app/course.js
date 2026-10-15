@@ -98,7 +98,7 @@ class App {
     $('#fm1 .power').textContent = 'On';
   }
   async saveVirtual() {
-    if (!this.virt.on) return;
+    if (!this.virt.on || (this.mirror && this.mirror.on)) return;   // a mirrored FM-1 is yours, not the virtual one's work
     const s = await this.virt.save();
     if (!s) return;
     const b64 = (u) => { let x = ''; for (let i = 0; i < u.length; i += 0x8000) x += String.fromCharCode(...u.subarray(i, i + 0x8000)); return btoa(x); };

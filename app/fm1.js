@@ -48,6 +48,9 @@ export class VirtualFM1 extends EventTarget {
     this.transport = { send: (bytes) => this.post({ t: 'midi', pkts: sysexToPackets(bytes) }), onSysex: null };
     this.link = new SloopLink(this.transport);
     this.waits = new Map();
+    // ready once the firmware has booted and the saved work (if any) is back: nothing may write to it before
+    this.booted = new Promise((res) => { this.bootRes = res; });
+    if (!restore) setTimeout(() => this.bootRes(), 1600);
     this.node.port.onmessage = (ev) => this.onMessage(ev.data);
     this.on = true;
     this.dispatchEvent(new Event('power'));
@@ -64,7 +67,8 @@ export class VirtualFM1 extends EventTarget {
           this.dispatchEvent(Object.assign(new Event('midiout'), { pkt: p }));   // the notes the keys send
         }
         break;
-      case 'saved': case 'restored': { const w = this.waits.get(m.id); if (w) { this.waits.delete(m.id); w(m); } break; }
+      case 'saved': case 'restored': {
+        if (m.id === 'boot' && this.bootRes) { this.bootRes(); break; } const w = this.waits.get(m.id); if (w) { this.waits.delete(m.id); w(m); } break; }
     }
   }
   ask(msg) { const id = Math.random().toString(36).slice(2); return new Promise((res) => { this.waits.set(id, res); this.post({ ...msg, id }); }); }

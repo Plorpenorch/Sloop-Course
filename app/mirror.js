@@ -19,6 +19,8 @@ export class Mirror extends EventTarget {
     if (!this.app.virt.on) await this.app.powerOn();
     if (!this.hw || !this.vl) throw new Error('Connect your FM-1 first.');
     this.on = true;
+    this.status('Mirror: starting the virtual FM-1…');
+    await this.app.virt.booted;            // (its saved work comes back first, then the copy goes over it)
     this.app.virt.mute(true);
     this.off = this.hw.on((cmd, args) => this.push(cmd, args));
     this.onMidi = (ev) => this.note(ev.data);
