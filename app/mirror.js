@@ -6,6 +6,9 @@
 import { CMD, enc14 } from './link.js';
 
 // globals that are actions or FM-1 settings, never copied (they would act on the virtual one)
+const GM_LANES = [36, 35, 38, 39, 42, 46, 44, 37, 40, 43, 48, 49, 51, 70, 63, 56];
+const WHITE = [0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26];
+const KNOB_OF = { LVL: 4, LEN: 5, PAN: 6, BPM: 0 };   // as the TRACKS screen has them (KNOB 2-4, SELECT); SWG: KNOB 1
 const SKIP_G = new Set(['SLOT', 'NAME', 'LOAD', 'SAVE', 'ENG', 'SET', 'CLRSQ', 'INIT', 'NEW', 'SYNC', 'IN', 'OUT', 'CPU']);
 
 export class Mirror extends EventTarget {
@@ -77,6 +80,7 @@ export class Mirror extends EventTarget {
       for (let t = 0; t < 4; t++) { this.status(`Mirror: copying track ${t + 1} of 4…`); await this.copyTrack(t); }
       const sel = (await this.hw.tracks()).sel;
       await this.vl.request(CMD.TRACK, [sel]);
+      this.lastSel = sel;
       this.busy = false;
       this.status('Mirroring your FM-1');
     });
@@ -86,12 +90,14 @@ export class Mirror extends EventTarget {
     if (!this.on) return;
     if (cmd === CMD.CHANGED) {
       const [scope, id, lo, hi] = a;
+      this.knob(scope, id, (lo | hi << 7) - 8192);
       this.run(async () => {
         if (scope === 1) { const d = this.hw.descs && this.hw.descs.g[id]; if (!d || SKIP_G.has(d.label)) return; await this.vl.request(CMD.SET, [1, id, lo, hi]); }
         else { const sel = (await this.hw.tracks()).sel; await this.vl.request(CMD.TRACK_PARAM, [sel, id, lo, hi]); }
       });
     } else if (cmd === CMD.TRACK_CHANGED) {
       const [t, id, lo, hi] = a;
+      this.knob(0, id, (lo | hi << 7) - 8192);
       this.run(() => this.vl.request(CMD.TRACK_PARAM, [t, id, lo, hi]));
     } else if (cmd === CMD.STEP_CHANGED) {
       const i = a[0];
@@ -101,6 +107,11 @@ export class Mirror extends EventTarget {
       // project load reloads several in a row)
       this.reloads = this.reloads || new Set();
       this.reloads.add(a.length > 2 ? a[2] : -1);
+      if (a.length > 2) {                                   // ALGORITHM (another track) or PRESETS (another sound)
+        const role = this.lastSel !== undefined && a[2] !== this.lastSel ? 1 : 2;
+        this.app.panel?.remoteKnob(role, role === 1 ? Math.sign(a[2] - this.lastSel) : 1);
+        this.lastSel = a[2];
+      }
       clearTimeout(this.reloadT);
       this.reloadT = setTimeout(() => this.run(async () => {
         const list = [...this.reloads]; this.reloads.clear();
@@ -110,6 +121,15 @@ export class Mirror extends EventTarget {
       }), 150);
     }
   }
+  knob(scope, id, v) {
+    const descs = this.hw && this.hw.descs; if (!descs) return;
+    const d = (scope ? descs.g : descs.p)[id]; if (!d) return;
+    const key = scope + ':' + id, prev = (this.vals = this.vals || {})[key]; this.vals[key] = v;
+    const dir = prev === undefined ? 1 : Math.sign(v - prev) || 1;
+    let role = scope ? (d.label === 'BPM' ? 0 : -1) : KNOB_OF[d.label];
+    if (!scope && d.label === 'SWG' && id === this.hw.pid(0, 'LEN') + 2) role = 3;
+    if (role !== undefined && role >= 0) this.app.panel?.remoteKnob(role, dir);
+  }
   // the notes your FM-1's keys send: played on the virtual one too (its screen and keys light up)
   note(d) {
     if (!this.on || this.busy) return;
@@ -117,5 +137,12 @@ export class Mirror extends EventTarget {
     if (st !== 0x90 && st !== 0x80 && st !== 0xB0 && st !== 0xE0) return;
     const pkt = ((st >> 4) | d[0] << 8 | (d[1] || 0) << 16 | (d[2] || 0) << 24) >>> 0;
     this.app.virt.midiIn([pkt]);
+    if (st === 0x90 || st === 0x80) {                    // the key on the drawing, held as long as yours
+      const down = st === 0x90 && d[2] > 0;
+      let k;
+      if ((d[0] & 15) === 9) { const lane = GM_LANES.indexOf(d[1]); k = lane < 0 ? -1 : WHITE[lane]; }
+      else { k = d[1] - 53; while (k < 0) k += 12; while (k > 26) k -= 12; }
+      if (k >= 0) this.app.panel?.remoteKey(k, down);
+    }
   }
 }

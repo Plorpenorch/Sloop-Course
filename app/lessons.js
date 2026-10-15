@@ -48,6 +48,36 @@ export const MODULES = [
           { text: 'Connect your FM-1 (skip this lesson if you only use the virtual one).', check: ({ S }) => S.hwOn },
         ],
       },
+      {
+        id: 'hear', title: 'Hear and mirror your FM-1 here',
+        body: `
+<p class="lead">With your FM-1 connected, the course can play its sound through this computer and show what you do on it on the virtual FM-1.</p>
+<h2>Its sound through the computer</h2>
+<p>On USB the FM-1 is also an audio input (named <i>Felucca</i>): its master output, in stereo. The course plays that input through this computer's speakers or headphones.</p>
+<ol>
+<li>Connect your FM-1 (previous lesson).</li>
+<li>Above the panel, tick <b>Hear my FM-1 through this computer</b>. Chrome asks to use the microphone once: allow it. That is how a web page reaches an audio input; nothing is recorded or sent anywhere.</li>
+<li>Set the level with the FM-1's ${k('MASTER')} knob.</li>
+</ol>
+<h3>Sound from the computer only (FM-1 speaker off)</h3>
+<p>SLOOP can send the USB audio at a fixed full level, so MASTER then only sets the FM-1's own speaker and headphones:</p>
+<ol>
+<li>On the FM-1, <b>hold</b> ${k('HOME')}: the menu opens.</li>
+<li>Turn ${k('SELECT')} to the <b>AUDIO</b> section.</li>
+<li>Turn ${k('KNOB 2')} (the <b>USB AUDIO</b> row) to <b>FULL</b>. Let go of HOME.</li>
+<li>Turn ${k('MASTER')} all the way down: the speaker is silent, the computer still gets full sound. Set the volume on the computer.</li>
+</ol>
+<p>It stays set through power-off. Turn MASTER up again to use the speaker; set USB AUDIO back to MASTER to make the knob set both again.</p>
+<div class="callout"><span class="ctitle">If the course finds no FM-1 audio</span>On a Mac, SLOOP's HOME menu → AUDIO → <b>USB SERIAL</b> must stay <b>OFF</b> (the default), or macOS does not show the audio input: set it OFF, then switch the FM-1 off and on. Unplug and replug the cable once; close apps that hold the input (a DAW).</div>
+<h2>Mirror it on the virtual FM-1</h2>
+<p>Tick <b>Mirror my FM-1</b>: the virtual FM-1 copies your FM-1 (sounds, parameters, patterns, kit, selected track, tempo and settings), then follows every change. The keys you play light up on the drawing, and the knobs you turn move when SLOOP reports the value they change (level, swing, steps, pan, tempo, track, sound).</p>
+<p>The virtual one stays silent while it mirrors, so you hear your FM-1 only; tick <b>Hear the virtual one</b> to compare. The page or layer on your FM-1's screen and PLAY / STOP are not reported over USB, so the virtual screen can show another page than yours.</p>`,
+        steps: [
+          { text: 'Tick <b>Hear my FM-1</b> and play a few keys on your FM-1: you hear it through the computer.', check: ({ S }) => S.usbAudioOn },
+          { text: 'Optional: USB AUDIO = FULL and MASTER down, for sound from the computer only.', optional: true },
+          { text: 'Tick <b>Mirror my FM-1</b> and turn KNOB 2 on your FM-1\'s TRACKS screen: the level moves on the virtual one too.', check: ({ S }) => S.mirrorOn },
+        ],
+      },
     ],
   },
   {

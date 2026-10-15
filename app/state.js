@@ -23,6 +23,8 @@ export class DeviceState {
   get link() { const d = this.dev; return d && d.link; }
   get virtOn() { return this.app.virt.on; }
   get hwOn() { return this.app.hw.state === 'on'; }
+  get mirrorOn() { return !!(this.app.mirror && this.app.mirror.on); }
+  get usbAudioOn() { return !!(this.app.usbAudio && this.app.usbAudio.on); }
   get stat() { return this.app.virt.stat; }
   hwCurrent() { const m = this.app.manifest, i = this.app.hw.info; return !!(m && i && this.app.cmpVersion(i.num, m.version) >= 0); }
   flag(name) { return !!this.flags[name]; }

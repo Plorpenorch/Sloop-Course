@@ -144,6 +144,20 @@ export function buildPanel(root, fm1) {
 
   return {
     canvas,
+    // what your FM-1 does, shown on the drawing (mirror): a key held, a knob turned
+    remoteKey(k, down) {
+      const el = root.querySelector(`[data-n="${k}"]`);
+      if (el) el.classList.toggle('remote', down);
+    },
+    remoteKnob(role, dir) {
+      const el = role === 'master' ? null : root.querySelector(`[data-k="${role}"]`);
+      if (!el) return;
+      const cap = el.querySelector('.cap');
+      el._ra = (el._ra || 0) + (dir || 1) * 18;
+      cap.style.transform = `rotate(${el._ra}deg)`;
+      el.classList.add('remote');
+      clearTimeout(el._rt); el._rt = setTimeout(() => el.classList.remove('remote'), 400);
+    },
     highlight(list) {
       for (const el of root.querySelectorAll('.hl')) el.classList.remove('hl');
       for (const name of list || []) {
