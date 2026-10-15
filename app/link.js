@@ -5,8 +5,8 @@
 const HDR = [0xF0, 0x7D, 0x46, 0x4C];
 export const CMD = { INFO: 1, GET: 2, SET: 3, DUMP: 4, DESC: 5, STEP_GET: 6, STEP_SET: 7, PRESET: 8, PROJECT: 9, NAMES: 10,
   WATCH: 22, CHANGED: 23, RELOAD: 24, PING: 25, STEP_CHANGED: 26, TRACK: 27, TRACK_MIX: 28, TRACK_DUMP: 29, TRACK_STEP: 30,
-  TRACK_PARAM: 31, TRACK_CHANGED: 32, DRUM_STEP: 33, LOCK_GET: 37, MICRO_GET: 39, FILL_GET: 41 };
-const PUSH = new Set([23, 24, 26, 32]);
+  TRACK_PARAM: 31, TRACK_CHANGED: 32, DRUM_STEP: 33, LOCK_GET: 37, MICRO_GET: 39, FILL_GET: 41, PANEL: 43 };
+const PUSH = new Set([23, 24, 26, 32, 43]);
 export const v14 = (lo, hi) => (lo | hi << 7) - 8192;
 export const enc14 = (v) => { const u = (v + 8192) & 0x3FFF; return [u & 0x7F, u >> 7]; };
 export const LANES = ['KICK', 'KICK 2', 'SNARE', 'CLAP', 'HAT', 'OPEN HAT', 'PEDAL HAT', 'RIM', 'SNARE 2', 'LOW TOM', 'HI TOM',
@@ -122,6 +122,14 @@ export class SloopLink {
     return hits;
   }
   async project(op, slot) { const r = new Reader(await this.request(CMD.PROJECT, [op, slot], 3000)); return { op: r.u8(), slot: r.u8(), used: r.u8() }; }
+  // v11 (SLOOP with the PANEL push): the buttons and keys held, the knob detents, where the screen is
+  static panel(a) {
+    const r = new Reader(a);
+    const buttons = r.u8() | r.u8() << 7, keys = r.bits(4), knobs = [];
+    for (let i = 0; i < 7; i++) knobs.push(r.u8() - 64);
+    const layer = r.u8(), f = r.u8(), page = r.u8(), title = r.str();
+    return { buttons, keys, knobs, layer, home: !!(f & 1), menu: !!(f & 2), playing: !!(f & 4), page, title };
+  }
   async watch(on) { const r = await this.request(CMD.WATCH, [on]); return r[0]; }
   async ping() { return this.request(CMD.PING, [], 500); }
 }

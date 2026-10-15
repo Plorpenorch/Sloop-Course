@@ -56,7 +56,7 @@ export class HardwareFM1 extends EventTarget {
   }
   startWatch() {
     clearInterval(this.pinger);
-    this.link.watch(3).catch(() => {});
+    this.link.watch(7).catch(() => {});      // 1 pushes, 2 the other tracks' mix, 4 the panel (v11)
     this.pinger = setInterval(() => { if (this.link) this.link.ping().catch(() => {}); }, 1000);
   }
   lost() {

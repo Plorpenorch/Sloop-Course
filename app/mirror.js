@@ -3,7 +3,7 @@
 // patterns, the drum kit, the selected track, the global settings), then every change the FM-1 reports
 // (WATCH pushes), and the notes its keys send. What the editor protocol does not report (the page or layer
 // on screen, PLAY / STOP) cannot be mirrored.
-import { CMD, enc14 } from './link.js';
+import { CMD, enc14, SloopLink } from './link.js';
 
 // globals that are actions or FM-1 settings, never copied (they would act on the virtual one)
 const GM_LANES = [36, 35, 38, 39, 42, 46, 44, 37, 40, 43, 48, 49, 51, 70, 63, 56];
@@ -29,6 +29,9 @@ export class Mirror extends EventTarget {
     this.onMidi = (ev) => this.note(ev.data);
     this.app.hw.addEventListener('midi', this.onMidi);
     await this.fullSync();
+    this.panelOn = (this.hw.inf.proto || 0) >= 11;
+    if (this.panelOn) { try { this.pn = SloopLink.panel(await this.hw.request(CMD.PANEL)); } catch (_) { this.panelOn = false; } }
+    this.status(this.panelOn ? 'Mirroring your FM-1: screen, keys, knobs and buttons' : 'Mirroring your FM-1 (sounds, patterns, notes; this SLOOP does not report its buttons)');
   }
   stop() {
     if (!this.on) return;
@@ -88,6 +91,7 @@ export class Mirror extends EventTarget {
   // a change on your FM-1
   push(cmd, a) {
     if (!this.on) return;
+    if (cmd === CMD.PANEL) { if (!this.busy) this.panel(SloopLink.panel(a)); return; }
     if (cmd === CMD.CHANGED) {
       const [scope, id, lo, hi] = a;
       this.knob(scope, id, (lo | hi << 7) - 8192);
@@ -107,7 +111,7 @@ export class Mirror extends EventTarget {
       // project load reloads several in a row)
       this.reloads = this.reloads || new Set();
       this.reloads.add(a.length > 2 ? a[2] : -1);
-      if (a.length > 2) {                                   // ALGORITHM (another track) or PRESETS (another sound)
+      if (a.length > 2 && !this.panelOn) {                  // ALGORITHM (another track) or PRESETS (another sound)
         const role = this.lastSel !== undefined && a[2] !== this.lastSel ? 1 : 2;
         this.app.panel?.remoteKnob(role, role === 1 ? Math.sign(a[2] - this.lastSel) : 1);
         this.lastSel = a[2];
@@ -122,6 +126,7 @@ export class Mirror extends EventTarget {
     }
   }
   knob(scope, id, v) {
+    if (this.panelOn) return;                            // (v11: the real detents come with PANEL)
     const descs = this.hw && this.hw.descs; if (!descs) return;
     const d = (scope ? descs.g : descs.p)[id]; if (!d) return;
     const key = scope + ':' + id, prev = (this.vals = this.vals || {})[key]; this.vals[key] = v;
@@ -130,9 +135,25 @@ export class Mirror extends EventTarget {
     if (!scope && d.label === 'SWG' && id === this.hw.pid(0, 'LEN') + 2) role = 3;
     if (role !== undefined && role >= 0) this.app.panel?.remoteKnob(role, dir);
   }
+  // v11: your FM-1's hands on the virtual one: the same buttons, keys and knob detents, so it walks the same pages
+  panel(p) {
+    const v = this.app.virt, panel = this.app.panel, prev = this.pn || { buttons: 0, keys: 0 };
+    this.panelOn = true;
+    for (let b = 0; b < 14; b++) {
+      const was = (prev.buttons >> b) & 1, now = (p.buttons >> b) & 1;
+      if (was !== now) { v.button(b, !!now); panel?.remoteBtn(b, !!now); }
+    }
+    for (let k = 0; k < 27; k++) {
+      const was = Math.floor(prev.keys / 2 ** k) & 1, now = Math.floor(p.keys / 2 ** k) & 1;
+      if (was !== now) { v.note(k, !!now); panel?.remoteKey(k, !!now); }
+    }
+    p.knobs.forEach((n, role) => { if (n) { v.turn(role, n); panel?.remoteKnob(role, Math.sign(n)); } });
+    this.pn = p;
+    this.status('Mirroring your FM-1 · ' + (p.menu ? 'menu' : p.title || 'TRACKS') + (p.playing ? ' · playing' : ''));
+  }
   // the notes your FM-1's keys send: played on the virtual one too (its screen and keys light up)
   note(d) {
-    if (!this.on || this.busy) return;
+    if (!this.on || this.busy || this.panelOn) return;     // (v11: the keys come with PANEL)
     const st = d[0] & 0xF0;
     if (st !== 0x90 && st !== 0x80 && st !== 0xB0 && st !== 0xE0) return;
     const pkt = ((st >> 4) | d[0] << 8 | (d[1] || 0) << 16 | (d[2] || 0) << 24) >>> 0;

@@ -150,6 +150,10 @@ export function buildPanel(root, fm1) {
       const el = root.querySelector(`[data-n="${k}"]`);
       if (el) el.classList.toggle('remote', down);
     },
+    remoteBtn(b, down) {
+      const el = root.querySelector(`[data-b="${b}"]`);
+      if (el) el.classList.toggle('remote', down);
+    },
     remoteKnob(role, dir) {
       const el = role === 'master' ? null : root.querySelector(`[data-k="${role}"]`);
       if (!el) return;
