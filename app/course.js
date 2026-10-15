@@ -59,7 +59,7 @@ class App {
     this.usbAudio = new FM1Audio();
     $('#usbaudio').onchange = async (e) => {
       if (e.target.checked) {
-        try { const name = await this.usbAudio.start(); this.toast(`Playing your FM-1 (${name}) through this computer. Turn its MASTER knob for the level.`); }
+        try { const name = await this.usbAudio.start(); this.toast(`Playing your FM-1 (${name}) through this computer. To silence its own speaker: on the FM-1, hold HOME → AUDIO → USB AUDIO = FULL, then turn MASTER all the way down.`); }
         catch (err) { e.target.checked = false; this.toast(err.message); }
       } else this.usbAudio.stop();
     };
