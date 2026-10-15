@@ -161,7 +161,8 @@ class App {
     $('#progtxt').textContent = `${done} / ${total} steps`;
   }
   route() {
-    const h = location.hash.slice(1) || 'lesson/welcome';
+    const h = location.hash.slice(1) || store.get('last', 'lesson/welcome');
+    if (h.startsWith('lesson/')) store.set('last', h);
     document.body.classList.remove('navopen');
     for (const a of document.querySelectorAll('.lessonlink')) a.classList.remove('active');
     const [kind, id, sub] = h.split('/');
