@@ -12,13 +12,14 @@ export function buildPanel(root, fm1) {
   const label = (s) => (s === ' ' ? 'SPACE' : s === 'enter' ? '⏎' : s.toUpperCase());
   const btn = (id) => `<button class="fbtn${id === B.PLAY ? ' play' : ''}" data-b="${id}" aria-label="${BUTTONS[id]}"><span class="bl">${id === B.PLAY ? 'PLAY<br>STOP' : BUTTONS[id]}</span><span class="ck">${keyOf.buttons[id] !== undefined ? label(keyOf.buttons[id]) : ''}</span></button>`;
   const knob = (role, cls = '') => `<div class="knob ${cls} ${KNOB_COLOR[KNOBS[role]] || ''}" data-k="${role}" role="slider" tabindex="0" aria-label="${KNOBS[role]}">
-      <span class="kl">${KNOBS[role].replace('KNOB ', 'KNOB')}</span><div class="cap"><i></i></div><span class="ck">${keyOf.knobs[role] !== undefined ? label(keyOf.knobs[role]) + ' ⇧' : ''}</span></div>`;
+      <span class="kl">${KNOBS[role].replace('KNOB ', 'KNOB')}</span><div class="cap enc"></div><span class="ck">${keyOf.knobs[role] !== undefined ? label(keyOf.knobs[role]) + ' ⇧' : ''}</span></div>`;
   const whites = [], blacks = [];
-  let w = 0;
+  const BLABEL = ['OP1', 'OP2', 'OP3', 'OP4', 'OP5', 'OP6', 'PIT', 'GLO', 'MONO', 'POLY', ''];   // printed under the black keys
+  let w = 0, nb = 0;
   for (let k = 0; k < 27; k++) {
     const ck = keyOf.keys[k] !== undefined ? label(keyOf.keys[k]) : '';
-    if (IS_BLACK(k)) blacks.push(`<button class="key black" data-n="${k}" style="left:calc(${w} * var(--kw) - var(--bw) / 2)" aria-label="${KEY_NAMES[k]}"><span class="ck">${ck}</span></button>`);
-    else { whites.push(`<button class="key white" data-n="${k}" aria-label="${KEY_NAMES[k]}"><span class="wi">${w + 1}</span><span class="ck">${ck}</span></button>`); w++; }
+    if (IS_BLACK(k)) blacks.push(`<button class="key black" data-n="${k}" style="left:calc(${w} * var(--kw) - var(--bw) / 2)" aria-label="${KEY_NAMES[k]}"><span class="ck">${ck}</span></button><span class="blab" style="left:calc(${w} * var(--kw) - var(--bw) / 2)">${BLABEL[nb++]}</span>`);
+    else { whites.push(`<button class="key white" data-n="${k}" aria-label="${KEY_NAMES[k]}"><span class="ck">${ck}</span></button>`); w++; }
   }
   const master = `<div class="knob master" data-m="1" role="slider" tabindex="0" aria-label="MASTER"><span class="kl">MASTER</span><div class="cap"><i></i></div></div>`;
   // the FM-1 as it is: MASTER, SELECT / PRESETS, ALGORITHM / OCT- OCT+ on the left, the screen, KNOB 1-4 over the

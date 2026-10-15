@@ -151,7 +151,7 @@ ol.steps { list-style: none; padding: 0; counter-reset: st; }
 .octs .fbtn { height: 22px; }
 .fbtn.down { transform: translateY(2px); box-shadow: 0 0 0 #121214; filter: brightness(.9); }
 .fbtn.latched { box-shadow: 0 0 0 2px var(--t1); transform: translateY(2px); }
-.keybed { position: relative; display: flex; margin-top: 12px; height: 104px; padding-top: 40px; background: #19191c; border-radius: 12px; padding-left: 6px; padding-right: 6px; padding-bottom: 6px; box-shadow: inset 0 1px 3px rgba(0,0,0,.6); }
+.keybed { position: relative; display: flex; margin-top: 12px; height: 116px; padding-top: 50px; background: #19191c; border-radius: 12px; padding-left: 6px; padding-right: 6px; padding-bottom: 6px; box-shadow: inset 0 1px 3px rgba(0,0,0,.6); }
 .keybed { --kw: calc((100% - 12px) / var(--n, 16)); }
 .key { position: relative; border: 0; cursor: pointer; padding: 0; }
 .key.white { flex: 1; margin: 0 2px; border-radius: 16px; background: linear-gradient(#323338, #26272b); box-shadow: 0 2px 0 #0c0c0e, inset 0 1px 0 rgba(255,255,255,.06); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 5px; }
@@ -193,3 +193,8 @@ ol.steps { list-style: none; padding: 0; counter-reset: st; }
 .key.remote { filter: brightness(1.6); box-shadow: 0 0 0 2px #79a8ff, 0 0 10px rgba(121,168,255,.6); }
 .key.remote::before { background: #fff; }
 .knob.remote .cap { box-shadow: 0 0 0 2px #79a8ff, 0 0 10px rgba(121,168,255,.6); transition: transform .08s; }
+
+/* endless encoders: no position mark, a knurled edge that turns; MASTER keeps its line */
+.knob .cap.enc { background: radial-gradient(circle at 38% 32%, #3c3d42, #18181b 58%, transparent 59%), repeating-conic-gradient(#2a2b30 0 6deg, #121214 6deg 12deg); }
+.blab { position: absolute; top: 38px; width: var(--bw); margin-left: 6px; text-align: center; font: 700 6.5px var(--sans); color: #b9bac0; letter-spacing: .2px; pointer-events: none; z-index: 2; }
+.key.black { height: 30px; }
