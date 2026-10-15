@@ -72,7 +72,7 @@ export const MODULES = [
         steps: [
           { text: `Turn ${k('ALGORITHM')} to track <b>4</b> (orange).`, check: async ({ S }) => (await S.sel()) === 3, show: ['ALGORITHM'] },
           { text: 'Play the kick (the first white key, F3) and the snare (A3).', check: ({ S }) => S.playedDrum([0]) && S.playedDrum([2]), hint: 'On the drum track every white key is a sound: F3 kick, G3 kick 2, A3 snare, B3 clap…' },
-          { text: `Turn ${k('PRESETS')} to the <b>909</b> kit.`, check: async ({ S }) => (await S.kit()) === '909', show: ['PRESETS'], hint: 'PRESETS on the drum track steps through the kits: ACOUSTIC, DEEP, TIGHT, BRIGHT, DUST, 808, 909…' },
+          { text: `On TRACKS, turn ${k('PRESETS')} to the <b>909</b> kit.`, check: async ({ S }) => (await S.kit()) === '909', show: ['PRESETS'], hint: 'PRESETS on the drum track steps through the kits: ACOUSTIC, DEEP, TIGHT, BRIGHT, DUST, 808, 909…' },
           { text: `Turn ${k('ALGORITHM')} back to track <b>2</b> and play a few notes: the Rhodes.`, check: async ({ S }) => (await S.sel()) === 1 && S.playedNote(), show: ['ALGORITHM'] },
         ],
       },
@@ -146,9 +146,9 @@ export const MODULES = [
 <li><b>Clear the track:</b> hold ${k('REC')} about 2 seconds (a ring fills).</li>
 <li>Drums: hold ${k('OCT−')} while you hit for ghost notes, ${k('OCT+')} for hard ones.</li></ul>`,
         steps: [
-          { text: `On track 4, press ${k('PLAY')}, then ${k('REC')}, and play claps on beats 2 and 4 (B3) for a couple of bars. Press REC to stop recording.`, check: async ({ S }) => (await S.laneSteps('CLAP', 16)).length > 0, show: ['PLAY', 'REC'], hint: 'Watch the PLAY light: it flashes on every beat. Hit the clap on the 2nd and 4th flash.' },
-          { text: `Undo it: hold ${k('EDIT')} and press ${k('OCT−')}. The claps are gone.`, check: async ({ S }) => (await S.laneSteps('CLAP', 16)).length === 0, show: ['EDIT', 'OCT-'] },
-          { text: `Redo: hold ${k('EDIT')} and press ${k('OCT+')}. They are back.`, check: async ({ S }) => (await S.laneSteps('CLAP', 16)).length > 0, show: ['EDIT', 'OCT+'] },
+          { text: `On track 4, press ${k('PLAY')}, then ${k('REC')}, and play claps on beats 2 and 4 (B3) for a couple of bars. Press REC to stop recording.`, check: async ({ S }) => { const n = (await S.laneSteps('CLAP', 16)).length; S.memo.claps = n; return n > 0 && !(await S.tracks()).list[3].armed; }, show: ['PLAY', 'REC'], hint: 'Watch the PLAY light: it flashes on every beat. Hit the clap on the 2nd and 4th flash.' },
+          { text: `Undo: hold ${k('EDIT')} and press ${k('OCT−')}. The last recorded pass goes (one level of undo).`, check: async ({ S }) => { const n = (await S.laneSteps('CLAP', 16)).length; if (S.memo.claps === undefined) return n === 0; S.memo.after = n; return n < S.memo.claps; }, show: ['EDIT', 'OCT-'] },
+          { text: `Redo: hold ${k('EDIT')} and press ${k('OCT+')}. It is back.`, check: async ({ S }) => { const n = (await S.laneSteps('CLAP', 16)).length; return S.memo.after === undefined ? n > 0 : n > S.memo.after; }, show: ['EDIT', 'OCT+'] },
         ],
       },
       {
@@ -227,15 +227,15 @@ export const MODULES = [
         id: 'sound', title: 'Sounds: engines, envelope, filter, sends',
         body: `
 <p class="lead">Every sound is a patch on one of twelve engines; the pages under ENV, LFO, EDIT and FX shape it.</p>
-<ul><li>${k('PRESETS')}: 153 sounds by kind (bass, keys, organ, pad, lead, pluck, stab, FX); the engine follows.</li>
+<ul><li>${k('PRESETS')}: 153 sounds by kind (bass, keys, organ, pad, lead, pluck, stab, FX); the engine follows. It browses on the TRACKS screen (and the SAVE → PRESETS page), so tap HOME first.</li>
 <li><b>ENV</b> (tap): attack, decay, sustain, release: how a note starts and fades.</li>
 <li><b>EDIT</b> (tap): the engine's own controls, filter included.</li>
 <li><b>FX</b> (tap): drive and the sends to chorus, delay and reverb; then FILTER (one knob: left low-pass, right high-pass), INSERT.</li></ul>
 <p>Changing a sound never changes the pattern, the key or the mix of its track.</p>`,
         steps: [
-          { text: `Select track 2, turn ${k('PRESETS')} to <b>M1 PIANO</b>.`, check: async ({ S }) => (await S.preset(1)) === 'M1 PIANO', show: ['ALGORITHM', 'PRESETS'] },
-          { text: `Tap ${k('FX')}: the FX page. Turn ${k('KNOB 4')} (REV) up and play.`, check: async ({ S }) => (await S.p(1, 'REV')) > 0, show: ['FX', 'K4'] },
-          { text: 'Turn PRESETS back to <b>RHODES</b> for the beat lesson.', check: async ({ S }) => (await S.preset(1)) === 'RHODES', show: ['PRESETS'] },
+          { text: `On TRACKS, select track 2 and turn ${k('PRESETS')} to <b>M1 PIANO</b>.`, check: async ({ S }) => (await S.preset(1)) === 'M1 PIANO', show: ['ALGORITHM', 'PRESETS'] },
+          { text: `Tap ${k('FX')}: the FX page. Turn ${k('KNOB 4')} (REV) up and play.`, check: async ({ S }) => S.turned(6) && (await S.p(1, 'REV')) > 0, show: ['FX', 'K4'] },
+          { text: `Tap ${k('HOME')}, then turn PRESETS back to <b>RHODES</b> for the beat lesson.`, check: async ({ S }) => (await S.preset(1)) === 'RHODES', show: ['HOME', 'PRESETS'] },
         ],
       },
     ],
@@ -251,7 +251,7 @@ export const MODULES = [
         steps: [
           { text: `New project: tap ${k('SAVE')} on a page other than TRACKS (tap ENV first), turn ${k('SELECT')} to <b>TOOLS</b>, turn ${k('KNOB 4')} NEW one click, then another within about 1.5 s.`, check: async ({ S }) => S.emptyProject(), show: ['SAVE', 'SELECT', 'K4'], hint: 'On TRACKS, SAVE opens the SONG screen instead: tap ENV, then SAVE. The SAVE pages are PRESETS, USER, PROJECT and TOOLS: SELECT moves between them. NEW asks for a second click to confirm.' },
           { text: `${k('HOME')}, then ${k('SELECT')} to <b>116</b> BPM.`, check: async ({ S }) => (await S.bpm()) === 116, show: ['HOME', 'SELECT'] },
-          { text: `Track 4: ${k('PRESETS')} to the <b>D.HOUSE</b> kit.`, check: async ({ S }) => (await S.kit()) === 'D.HOUSE', show: ['ALGORITHM', 'PRESETS'] },
+          { text: `Track 4, on TRACKS: ${k('PRESETS')} to the <b>D.HOUSE</b> kit.`, check: async ({ S }) => (await S.kit()) === 'D.HOUSE', show: ['ALGORITHM', 'PRESETS'] },
           { text: '<i>Optional, on your FM-1:</i> SLOOP\'s web editor has a <b>Drum synth</b> page to make a softer copy of D.HOUSE (kick CLICK down, shorter clap and open hat). It needs the editor, so it is not checked here.', optional: true },
         ],
       },
@@ -291,7 +291,7 @@ export const MODULES = [
 <p>On the virtual FM-1, hold the four keys on the computer keyboard (turn on <i>Keys</i>), or use touch.</p>
 <p><b>Shorter notes</b> (optional): tap SEQ for the STEP page; KNOB 1 moves to a step, KNOB 3 LEN sets how many steps it lasts (2 = an eighth note).</p>`,
         steps: [
-          { text: `Track 2: ${k('PRESETS')} RHODES; hold SEQ, ${k('KNOB 4')} length <b>64</b>, division 1/16, swing 0.`, check: async ({ S }) => (await S.preset(1)) === 'RHODES' && (await S.p(1, 'LEN')) === 64 && (await S.pname(1, 'DIV')) === '1/16', show: ['ALGORITHM', 'PRESETS', 'SEQ', 'K4'] },
+          { text: `Track 2, on TRACKS: ${k('PRESETS')} RHODES; hold SEQ, ${k('KNOB 4')} length <b>64</b>, division 1/16, swing 0.`, check: async ({ S }) => (await S.preset(1)) === 'RHODES' && (await S.p(1, 'LEN')) === 64 && (await S.pname(1, 'DIV')) === '1/16', show: ['ALGORITHM', 'PRESETS', 'SEQ', 'K4'] },
           { text: 'Am7 on steps 3 and 11.', check: async ({ S }) => S.chordAt(1, [3, 11], ['A3', 'C4', 'E4', 'G4']) },
           { text: 'Fmaj7 on steps 19 and 27 (page 2).', check: async ({ S }) => S.chordAt(1, [19, 27], ['A3', 'C4', 'E4', 'F4']) },
           { text: 'Cmaj7 on steps 35 and 43 (page 3).', check: async ({ S }) => S.chordAt(1, [35, 43], ['G3', 'B3', 'C4', 'E4']) },
@@ -309,7 +309,7 @@ export const MODULES = [
 <p>SUB BASS already plays two octaves below the keys: enter the notes as written, don't transpose.</p>
 <p><b>How:</b> play the note once, hold SEQ, press the step keys (the last note played is what gets set).</p>`,
         steps: [
-          { text: `Track 1: ${k('PRESETS')} <b>SUB BASS</b>; hold SEQ, length <b>64</b>, division 1/16.`, check: async ({ S }) => (await S.preset(0)) === 'SUB BASS' && (await S.p(0, 'LEN')) === 64, show: ['ALGORITHM', 'PRESETS', 'SEQ', 'K4'] },
+          { text: `Track 1, on TRACKS: ${k('PRESETS')} <b>SUB BASS</b>; hold SEQ, length <b>64</b>, division 1/16.`, check: async ({ S }) => (await S.preset(0)) === 'SUB BASS' && (await S.p(0, 'LEN')) === 64, show: ['ALGORITHM', 'PRESETS', 'SEQ', 'K4'] },
           { text: 'A3 on 3, 7, 11, 15.', check: async ({ S }) => S.noteAt(0, [3, 7, 11, 15], 'A3') },
           { text: 'F3 on 19, 23, 27, 31.', check: async ({ S }) => S.noteAt(0, [19, 23, 27, 31], 'F3') },
           { text: 'C4 on 35, 39, 43, 47.', check: async ({ S }) => S.noteAt(0, [35, 39, 43, 47], 'C4') },
@@ -324,7 +324,7 @@ export const MODULES = [
 <tr><td>Note</td><td>E5</td><td>G5</td><td>A5</td><td>G5</td><td>E5</td><td>D5</td><td>B4</td><td>D5</td></tr></table>
 <p>A5 is above the keys: press ${k('OCT+')}, and the A4 key plays A5. Press ${k('OCT−')} afterwards to come back (both OCT buttons together: back to 0).</p>`,
         steps: [
-          { text: `Track 3: ${k('PRESETS')} <b>MUTED GTR</b>, length 64.`, check: async ({ S }) => (await S.preset(2)) === 'MUTED GTR' && (await S.p(2, 'LEN')) === 64, show: ['ALGORITHM', 'PRESETS'] },
+          { text: `Track 3, on TRACKS: ${k('PRESETS')} <b>MUTED GTR</b>; hold SEQ, length 64.`, check: async ({ S }) => (await S.preset(2)) === 'MUTED GTR' && (await S.p(2, 'LEN')) === 64, show: ['ALGORITHM', 'PRESETS'] },
           { text: 'The melody, steps 7 to 63 as in the table.', check: async ({ S }) => S.melody(2, { 7: 'E5', 15: 'G5', 23: 'A5', 31: 'G5', 39: 'E5', 47: 'D5', 55: 'B4', 63: 'D5' }), hint: 'Each note: play it, hold SEQ, press the step key on the right page (7 and 15 on page 1, 23 and 31 on page 2…).' },
           { text: 'Bring it down: on TRACKS, KNOB 2 (LEVEL) a bit lower than the Rhodes.', check: async ({ S }) => { const t = (await S.tracks()).list; return t[2].level < t[1].level; } },
         ],

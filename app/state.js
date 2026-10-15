@@ -17,6 +17,7 @@ export class DeviceState {
     this.flags = {};
     this.names = new Map();
     this.cache = new Map();
+    this.memo = {};
   }
   get dev() { return this.app.checked(); }
   get link() { const d = this.dev; return d && d.link; }
@@ -26,6 +27,7 @@ export class DeviceState {
   hwCurrent() { const m = this.app.manifest, i = this.app.hw.info; return !!(m && i && this.app.cmpVersion(i.num, m.version) >= 0); }
   flag(name) { return !!this.flags[name]; }
   newPass() { this.cache.clear(); }
+  kindNow() { return this.app.checkedKind(); }
   resetSeen() { this.events = []; this.seen = { layers: new Set(), locked: new Set(), playing: false }; }
   record(ev) { this.events.push({ t: performance.now(), ...ev }); if (this.events.length > 400) this.events.splice(0, 100); }
   observe() {                 // called on every stat from the virtual FM-1

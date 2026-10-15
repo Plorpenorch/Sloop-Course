@@ -23,7 +23,7 @@ export function buildPanel(root, fm1) {
   root.innerHTML = `
   <div class="fm1">
     <div class="fm1-top">
-      <div class="screenbox"><canvas width="240" height="240" class="lcd"></canvas>
+      <div class="screenbox"><canvas width="480" height="480" class="lcd"></canvas>
         <button class="power" data-show="power" aria-label="Power">⏻ Power</button></div>
       <div class="ctrl">
         <div class="knobrow">${knob(K.ALGORITHM, 'big')}${knob(K.PRESETS, 'big')}${knob(K.SELECT, 'big')}
@@ -37,7 +37,7 @@ export function buildPanel(root, fm1) {
   </div>`;
   const canvas = root.querySelector('canvas');
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 240, 240);
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 480, 480);
   fm1.addEventListener('fb', (ev) => paintScreen(canvas, ev.fb));
 
   // ---- lights

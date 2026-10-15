@@ -95,14 +95,16 @@ export class VirtualFM1 extends EventTarget {
   midiIn(pkts) { this.post({ t: 'midi', pkts }); }
 }
 
-// RGB565 framebuffer -> canvas
+// RGB565 framebuffer -> canvas (drawn at 2x, so the browser scales it down smoothly at any size)
 export function paintScreen(canvas, fb) {
-  const ctx = canvas.getContext('2d');
-  if (!canvas._img) canvas._img = ctx.createImageData(240, 240);
+  if (!canvas._off) { canvas._off = document.createElement('canvas'); canvas._off.width = canvas._off.height = 240; canvas._img = canvas._off.getContext('2d').createImageData(240, 240); }
   const d = canvas._img.data;
   for (let i = 0; i < 240 * 240; i++) {
     const v = fb[i];
     d[4 * i] = ((v >> 11) & 31) * 255 / 31 | 0; d[4 * i + 1] = ((v >> 5) & 63) * 255 / 63 | 0; d[4 * i + 2] = (v & 31) * 255 / 31 | 0; d[4 * i + 3] = 255;
   }
-  ctx.putImageData(canvas._img, 0, 0);
+  canvas._off.getContext('2d').putImageData(canvas._img, 0, 0);
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(canvas._off, 0, 0, canvas.width, canvas.height);
 }

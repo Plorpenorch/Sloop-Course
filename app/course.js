@@ -180,6 +180,7 @@ class App {
     const l = LESSONS.find((x) => x.id === id) || LESSONS[0];
     this.current = l;
     this.S.resetSeen();
+    this.S.memo = {};
     const i = LESSONS.indexOf(l), prev = LESSONS[i - 1], next = LESSONS[i + 1];
     const p = this.progress[l.id] || [];
     $('#content').innerHTML = `
