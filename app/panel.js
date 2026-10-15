@@ -10,35 +10,40 @@ const invert = (o) => Object.fromEntries(Object.entries(o).map(([a, b]) => [b, a
 export function buildPanel(root, fm1) {
   const keyOf = { keys: invert(KEYMAP.keys), buttons: invert(KEYMAP.buttons), knobs: invert(KEYMAP.knobs) };
   const label = (s) => (s === ' ' ? 'SPACE' : s === 'enter' ? '⏎' : s.toUpperCase());
-  const btn = (id) => `<button class="fbtn" data-b="${id}" aria-label="${BUTTONS[id]}"><span class="led"></span><span class="bl">${BUTTONS[id]}</span><span class="ck">${keyOf.buttons[id] !== undefined ? label(keyOf.buttons[id]) : ''}</span></button>`;
+  const btn = (id) => `<button class="fbtn${id === B.PLAY ? ' play' : ''}" data-b="${id}" aria-label="${BUTTONS[id]}"><span class="bl">${id === B.PLAY ? 'PLAY<br>STOP' : BUTTONS[id]}</span><span class="ck">${keyOf.buttons[id] !== undefined ? label(keyOf.buttons[id]) : ''}</span></button>`;
   const knob = (role, cls = '') => `<div class="knob ${cls} ${KNOB_COLOR[KNOBS[role]] || ''}" data-k="${role}" role="slider" tabindex="0" aria-label="${KNOBS[role]}">
-      <div class="cap"><i></i></div><span class="kl">${KNOBS[role].replace('KNOB ', 'K')}</span><span class="ck">${keyOf.knobs[role] !== undefined ? label(keyOf.knobs[role]) + ' ⇧' : ''}</span></div>`;
+      <span class="kl">${KNOBS[role].replace('KNOB ', 'KNOB')}</span><div class="cap"><i></i></div><span class="ck">${keyOf.knobs[role] !== undefined ? label(keyOf.knobs[role]) + ' ⇧' : ''}</span></div>`;
   const whites = [], blacks = [];
   let w = 0;
   for (let k = 0; k < 27; k++) {
     const ck = keyOf.keys[k] !== undefined ? label(keyOf.keys[k]) : '';
     if (IS_BLACK(k)) blacks.push(`<button class="key black" data-n="${k}" style="left:calc(${w} * var(--kw) - var(--bw) / 2)" aria-label="${KEY_NAMES[k]}"><span class="ck">${ck}</span></button>`);
-    else { whites.push(`<button class="key white" data-n="${k}" aria-label="${KEY_NAMES[k]}"><span class="nn">${KEY_NAMES[k]}</span><span class="wi">${w + 1}</span><span class="ck">${ck}</span></button>`); w++; }
+    else { whites.push(`<button class="key white" data-n="${k}" aria-label="${KEY_NAMES[k]}"><span class="wi">${w + 1}</span><span class="ck">${ck}</span></button>`); w++; }
   }
+  const master = `<div class="knob master" data-m="1" role="slider" tabindex="0" aria-label="MASTER"><span class="kl">MASTER</span><div class="cap"><i></i></div></div>`;
+  // the FM-1 as it is: MASTER, SELECT / PRESETS, ALGORITHM / OCT- OCT+ on the left, the screen, KNOB 1-4 over the
+  // two rows of six buttons on the right, the keys below (black keys above the white ones)
   root.innerHTML = `
+  <div class="bigscreen"><canvas width="480" height="480" class="lcd big"></canvas>
+    <button class="power" data-show="power" aria-label="Power">⏻ Power on</button></div>
   <div class="fm1">
     <div class="fm1-top">
-      <div class="screenbox"><canvas width="480" height="480" class="lcd"></canvas>
-        <button class="power" data-show="power" aria-label="Power">⏻ Power</button></div>
-      <div class="ctrl">
-        <div class="knobrow">${knob(K.ALGORITHM, 'big')}${knob(K.PRESETS, 'big')}${knob(K.SELECT, 'big')}
-          <div class="knob master" data-m="1" role="slider" tabindex="0" aria-label="MASTER"><div class="cap"><i></i></div><span class="kl">MASTER</span></div></div>
+      <div class="left">
+        <div class="kgrid">${master}${knob(K.SELECT)}${knob(K.PRESETS)}${knob(K.ALGORITHM)}</div>
+        <div class="octs">${btn(B['OCT-'])}${btn(B['OCT+'])}</div>
+      </div>
+      <div class="screenbox"><canvas width="480" height="480" class="lcd small"></canvas></div>
+      <div class="right">
         <div class="knobrow four">${knob(K.K1)}${knob(K.K2)}${knob(K.K3)}${knob(K.K4)}</div>
-        <div class="btnrow">${[B.FX, B.SEL, B.ENV, B.LFO, B.EDIT, B.GLO, B.HOME].map(btn).join('')}</div>
-        <div class="btnrow">${[B.SAVE, B.ARP, B.SEQ, B.PLAY, B.REC, B['OCT-'], B['OCT+']].map(btn).join('')}</div>
+        <div class="btngrid">${[B.FX, B.SEL, B.ENV, B.LFO, B.EDIT, B.GLO, B.HOME, B.SAVE, B.ARP, B.SEQ, B.PLAY, B.REC].map(btn).join('')}</div>
       </div>
     </div>
     <div class="keybed" style="--n:${w}">${whites.join('')}${blacks.join('')}</div>
+    <div class="brand">M-VAVE FM-1 · SLOOP</div>
   </div>`;
-  const canvas = root.querySelector('canvas');
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 480, 480);
-  fm1.addEventListener('fb', (ev) => paintScreen(canvas, ev.fb));
+  const canvas = root.querySelector('canvas.big'), small = root.querySelector('canvas.small');
+  for (const c of [canvas, small]) { const x = c.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, 480, 480); }
+  fm1.addEventListener('fb', (ev) => { paintScreen(canvas, ev.fb); small.getContext('2d').drawImage(canvas, 0, 0); });
 
   // ---- lights
   const btnEls = [...root.querySelectorAll('[data-b]')], keyEls = [...root.querySelectorAll('[data-n]')];
