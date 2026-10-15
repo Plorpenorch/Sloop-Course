@@ -36,8 +36,8 @@ export class VirtualFM1 extends EventTarget {
     await this.ctx.resume();
     const base = new URL('.', import.meta.url);
     const [module] = await Promise.all([
-      fetch(new URL('sloop-emu.wasm', base)).then((r) => { if (!r.ok) throw new Error('sloop-emu.wasm missing'); return r.arrayBuffer(); }).then((b) => WebAssembly.compile(b)),
-      this.ctx.audioWorklet.addModule(new URL('worklet.js', base)),
+      fetch(new URL('sloop-emu.wasm?v=' + (window.SLOOP_COURSE_V || ''), base)).then((r) => { if (!r.ok) throw new Error('sloop-emu.wasm missing'); return r.arrayBuffer(); }).then((b) => WebAssembly.compile(b)),
+      this.ctx.audioWorklet.addModule(new URL('worklet.js?v=' + (window.SLOOP_COURSE_V || ''), base)),
     ]);
     this.node = new AudioWorkletNode(this.ctx, 'sloop-fm1', { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2],
       processorOptions: { module, restore } });

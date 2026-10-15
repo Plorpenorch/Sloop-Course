@@ -74,6 +74,7 @@ def main():
            "published": rel.get("published_at"), "source": a["browser_download_url"], "release": rel.get("html_url"),
            "prerelease": rel.get("prerelease", False), "notes": rel.get("body") or ""}
     MAN.write_text(json.dumps(man, indent=2) + "\n")
+    (ROOT / "version.json").write_text(json.dumps({"v": "sloop" + ver + "-" + sha[:8]}) + "\n")
     print(f"new={ver}")
     out = os.environ.get("GITHUB_OUTPUT")
     if out:

@@ -32,7 +32,7 @@ jobs:
         run: |
           git config user.name "sloop-course-sync"
           git config user.email "actions@users.noreply.github.com"
-          git add -A firmware app/sloop-emu.wasm app/sloop-emu.version data
+          git add -A firmware app/sloop-emu.wasm app/sloop-emu.version data version.json
           git commit -m "SLOOP ${{ steps.sync.outputs.new }}: firmware mirrored, virtual FM-1 and manual rebuilt" || exit 0
           git push
       - name: Flag the lessons for review

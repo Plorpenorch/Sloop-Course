@@ -6,7 +6,7 @@
 <title>SLOOP Course</title>
 <meta name="description" content="Learn SLOOP on the M-VAVE FM-1: an interactive course with the real SLOOP firmware running in the browser, lessons that check your FM-1, and firmware updates.">
 <link rel="icon" href="app/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="app/style.css">
+<link rel="stylesheet" href="app/style.css" id="css">
 </head>
 <body>
 <div id="app">
@@ -46,6 +46,20 @@
   </aside>
 </div>
 <div id="toast" role="status"></div>
-<script type="module" src="app/course.js"></script>
+<script>
+/* GitHub Pages lets browsers keep files for 10 minutes: every file is asked for under this build's version,
+   so a new build shows at the next reload */
+(async () => {
+  let v = '';
+  try { v = (await (await fetch('version.json', { cache: 'no-store' })).json()).v; } catch (_) { v = String(Date.now()); }
+  const mods = ['course', 'fm1', 'link', 'hw', 'panel', 'lessons', 'state', 'firmware', 'mirror', 'audioin', 'vendor/fm1ota', 'vendor/fm1pkg'];
+  const map = { imports: {} };
+  for (const m of mods) map.imports[new URL('app/' + m + '.js', location.href).href] = new URL('app/' + m + '.js?v=' + v, location.href).href;
+  const im = document.createElement('script'); im.type = 'importmap'; im.textContent = JSON.stringify(map); document.head.appendChild(im);
+  document.getElementById('css').href = 'app/style.css?v=' + v;
+  window.SLOOP_COURSE_V = v;
+  import('./app/course.js');
+})();
+</script>
 </body>
 </html>

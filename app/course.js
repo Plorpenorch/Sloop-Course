@@ -325,7 +325,7 @@ class App {
   // ---- reference pages
   async showManual(q, doc) {
     this.current = null; this.panel.highlight([]);
-    if (!this.manual) { try { this.manual = await (await fetch('data/manual.json')).json(); } catch (_) { this.manual = { sections: [] }; } }
+    if (!this.manual) { try { this.manual = await (await fetch('data/manual.json?v=' + (window.SLOOP_COURSE_V || ''))).json(); } catch (_) { this.manual = { sections: [] }; } }
     const secs = this.manual.sections;
     const anchor = doc && q && secs.find((s) => s.doc === doc && s.id === q);
     $('#content').innerHTML = `<div class="crumb">Reference · SLOOP ${esc(this.manual.version || '')}</div><h1>Manual</h1>
@@ -352,7 +352,7 @@ class App {
   }
   async showWhatsNew() {
     this.current = null; this.panel.highlight([]);
-    let w; try { w = await (await fetch('data/whatsnew.json')).json(); } catch (_) { w = { releases: [] }; }
+    let w; try { w = await (await fetch('data/whatsnew.json?v=' + (window.SLOOP_COURSE_V || ''))).json(); } catch (_) { w = { releases: [] }; }
     $('#content').innerHTML = `<div class="crumb">Reference</div><h1>What's new in SLOOP</h1>
       <p class="lead">Every release's notes, from SLOOP's manual. ${this.manifest ? `The newest is <b>${esc(this.manifest.version)}</b>; the virtual FM-1 runs it.` : ''}</p>
       ${w.releases.map((r, i) => `<details class="msec" ${i === 0 ? 'open' : ''}><summary><span class="mdoc">${esc(r.version)}</span>New in SLOOP ${esc(r.version)}</summary><div class="mbody">${r.html}</div></details>`).join('')}`;
