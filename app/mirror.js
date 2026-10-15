@@ -148,6 +148,7 @@ export class Mirror extends EventTarget {
       if (was !== now) { v.note(k, !!now); panel?.remoteKey(k, !!now); }
     }
     p.knobs.forEach((n, role) => { if (n) { v.turn(role, n); panel?.remoteKnob(role, Math.sign(n)); } });
+    if (p.master >= 0 && p.master !== prev.master) panel?.remoteMaster(Math.sqrt(Math.min(4096, p.master) / 4096));
     this.pn = p;
     this.status('Mirroring your FM-1 · ' + (p.menu ? 'menu' : p.title || 'TRACKS') + (p.playing ? ' · playing' : ''));
   }

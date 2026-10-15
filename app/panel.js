@@ -100,6 +100,7 @@ export function buildPanel(root, fm1) {
       cap.style.transform = `rotate(${angle}deg)`;
     };
     if (role < 0) { angle = (mv / 1023) * 270 - 135; cap.style.transform = `rotate(${angle}deg)`; }
+    if (role < 0) el._setMaster = (v) => { mv = Math.max(0, Math.min(1023, Math.round(v))); angle = (mv / 1023) * 270 - 135; cap.style.transform = `rotate(${angle}deg)`; fm1.master(mv); };
     el.addEventListener('pointerdown', (ev) => { ev.preventDefault(); el.setPointerCapture(ev.pointerId); y0 = ev.clientY; acc = 0; el.classList.add('down'); });
     el.addEventListener('pointermove', (ev) => {
       if (y0 === null) return;
@@ -149,6 +150,10 @@ export function buildPanel(root, fm1) {
     remoteKey(k, down) {
       const el = root.querySelector(`[data-n="${k}"]`);
       if (el) el.classList.toggle('remote', down);
+    },
+    remoteMaster(pos) {                                  // 0..1, your FM-1's MASTER (v11)
+      const el = root.querySelector('.knob.master');
+      if (el && el._setMaster) { el._setMaster(pos * 1023); el.classList.add('remote'); clearTimeout(el._rt); el._rt = setTimeout(() => el.classList.remove('remote'), 400); }
     },
     remoteBtn(b, down) {
       const el = root.querySelector(`[data-b="${b}"]`);
