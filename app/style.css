@@ -94,6 +94,13 @@ ol.steps { list-style: none; padding: 0; counter-reset: st; }
 .confirm { font-size: 13px; color: var(--dim); display: flex; gap: 8px; align-items: flex-start; }
 .fwlog { margin-top: 12px; font: 12px var(--mono); color: var(--dim); }
 .fwlog .ok { color: var(--good); } .fwlog .err { color: var(--bad); }
+.fwdock { margin: 10px 0; padding: 12px 14px; border-radius: 12px; background: #2a1f0c; border: 1px solid #6b4a12; color: #ffdf9e; font-size: 13px; line-height: 1.45; }
+.fwdock p { margin: 6px 0; }
+.fwdock .fwdtitle { font-weight: 700; color: #fff; font-size: 14px; }
+.fwdock .fwwarn { color: #f0c987; font-size: 12px; }
+.fwdock .fwdbtns { display: flex; gap: 8px; margin-top: 10px; }
+.fwdock .fwactions { margin-top: 10px; }
+.fwdock .confirm { color: #f0c987; font-size: 12px; }
 
 /* manual */
 #msearch { width: 100%; font: 15px var(--sans); padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); margin: 8px 0 16px; }

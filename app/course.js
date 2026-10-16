@@ -154,6 +154,7 @@ class App {
       banner.innerHTML = `The virtual FM-1 and the manual are on SLOOP ${esc(m.version)}; the lessons were written for ${esc(this.courseInfo.reviewedFor)}. <a href="#whatsnew">What's new</a>`;
       banner.hidden = false;
     } else banner.hidden = true;
+    this.dockFw();
   }
 
   // ---- navigation
@@ -269,43 +270,66 @@ class App {
     }
   }
 
-  // ---- firmware: backup and update (lesson "firmware")
-  fwPanel() {
-    const el = $('#fwpanel'), m = this.manifest, h = this.hw;
+  // ---- firmware: backup and update (the lesson "firmware", and the dock when a connected FM-1 is behind)
+  fwPanel() { const el = $('#fwpanel'); if (el) this.fwUpdater(el, false); }
+  fwOld() { const h = this.hw, m = this.manifest; return h.state === 'on' && m && h.info && FW.cmpVersion(h.info.num, m.version) < 0; }
+  dockFw() {
+    const el = $('#fwdock'), m = this.manifest, h = this.hw;
     if (!el) return;
+    if (this.fwBusy) return;                              // (an update running: the card stays as it is)
+    const show = this.fwOld() && this.fwDismissed !== h.info.num + '>' + m.version;
+    if (!show) { el.hidden = true; el.innerHTML = ''; this.fwDockFor = null; return; }
+    const key = h.info.num + '>' + m.version;
+    if (this.fwDockFor === key) { el.hidden = false; return; }
+    this.fwDockFor = key;
+    el.hidden = false;
+    el.innerHTML = `<div class="fwdtitle">Firmware update available</div>
+      <p>Your FM-1 runs SLOOP <b>${esc(h.info.num)}</b>. This course is built for SLOOP <b>${esc(m.version)}</b>.</p>
+      <p class="fwwarn">If you don't update, parts of the course (lesson checks, mirroring, the virtual FM-1 matching yours) may not work correctly.</p>
+      <p class="fwwarn">Back up your work before updating: projects, user presets, samples and settings. The updater keeps them, but a backup is your safety net.</p>
+      <div class="fwdbtns"><button class="btn primary small" id="fwdyes">Update my FM-1</button><button class="btn small" id="fwdno">Not now</button></div>
+      <div class="fwdbody"></div>`;
+    $('#fwdno', el).onclick = () => { this.fwDismissed = key; el.hidden = true; };
+    $('#fwdyes', el).onclick = () => { $('.fwdbtns', el).remove(); this.fwUpdater($('.fwdbody', el), true); };
+  }
+  fwUpdater(el, compact) {
+    const m = this.manifest, h = this.hw;
     const dev = h.state === 'on' ? h.info.num : null;
     const cur = m && dev && FW.cmpVersion(dev, m.version) >= 0;
     el.innerHTML = `
-      <div class="fwrow"><div><div class="wtitle">Newest SLOOP</div><div class="big">${m ? esc(m.version) : '—'}</div>
+      ${compact ? '' : `<div class="fwrow"><div><div class="wtitle">Newest SLOOP</div><div class="big">${m ? esc(m.version) : '—'}</div>
         ${m ? `<div class="sub"><a href="${esc(m.release)}" target="_blank" rel="noopener">release notes</a> · <a href="#whatsnew">what's new</a></div>` : ''}</div>
-      <div><div class="wtitle">Your FM-1</div><div class="big">${dev ? esc(dev) : '—'}</div><div class="sub">${dev ? (cur ? 'up to date' : 'update available') : 'not connected'}</div></div></div>
+      <div><div class="wtitle">Your FM-1</div><div class="big">${dev ? esc(dev) : '—'}</div><div class="sub">${dev ? (cur ? 'up to date' : 'update available') : 'not connected'}</div></div></div>`}
       <div class="fwactions">
-        ${h.state === 'on' ? '' : '<button class="btn" id="fwconnect">Connect your FM-1</button>'}
-        <button class="btn" id="fwbackup" ${h.state === 'on' ? '' : 'disabled'}>1 · Save a backup</button>
-        <label class="confirm"><input type="checkbox" id="fwok"> I have a backup and the FM-1 is on a data cable, charged, with no other MIDI app open</label>
-        <button class="btn primary" id="fwinstall" disabled>2 · Install SLOOP ${m ? esc(m.version) : ''}</button>
+        ${h.state === 'on' ? '' : '<button class="btn fwconnect">Connect your FM-1</button>'}
+        <button class="btn fwbackup" ${h.state === 'on' ? '' : 'disabled'}>1 · Save a backup</button>
+        <label class="confirm"><input type="checkbox" class="fwok"> I have a backup and the FM-1 is on a data cable, charged, with no other MIDI app open</label>
+        <button class="btn primary fwinstall" disabled>2 · Install SLOOP ${m ? esc(m.version) : ''}</button>
       </div>
-      <div id="fwlog" class="fwlog"></div>`;
-    const log = (t, cls = '') => { $('#fwlog').innerHTML += `<div class="${cls}">${esc(t)}</div>`; };
-    const sync = () => { $('#fwinstall').disabled = !(h.state === 'on' && m && $('#fwok').checked); };
-    $('#fwok').onchange = sync; sync();
-    if ($('#fwconnect')) $('#fwconnect').onclick = async () => { await this.connectHw(); this.fwPanel(); };
-    $('#fwbackup').onclick = async () => {
-      const b = $('#fwbackup'); b.disabled = true;
+      <div class="fwlog"></div>`;
+    const q = (c) => $('.' + c, el);
+    const log = (t, cls = '') => { q('fwlog').insertAdjacentHTML('beforeend', `<div class="${cls}">${esc(t)}</div>`); };
+    const sync = () => { q('fwinstall').disabled = !(h.state === 'on' && m && q('fwok').checked) || this.fwBusy; };
+    q('fwok').onchange = sync; sync();
+    if (q('fwconnect')) q('fwconnect').onclick = async () => { await this.connectHw(); this.fwUpdater(el, compact); };
+    q('fwbackup').onclick = async () => {
+      const b = q('fwbackup'); b.disabled = true;
       try {
         const file = await FW.backup(h.link, (d, t) => { b.textContent = `Backing up… ${Math.round(100 * d / t)} %`; });
         const blob = new Blob([JSON.stringify(file)], { type: 'application/json' });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
         a.download = `SLOOP-backup-${new Date().toISOString().slice(0, 10)}.json`; a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-        this.S.flags.backup = true; $('#fwok').checked = true; sync();
+        this.S.flags.backup = true; q('fwok').checked = true; sync();
         b.textContent = 'Backup saved ✓'; log('Backup saved: keep the file. SLOOP\'s web editor restores it (Projects → Backup → Restore).', 'ok');
       } catch (e) { b.textContent = '1 · Save a backup'; log(e.message, 'err'); }
       b.disabled = false;
     };
-    $('#fwinstall').onclick = async () => {
+    q('fwinstall').onclick = async () => {
       if (!confirm(`Install SLOOP ${m.version} on your FM-1? Don't unplug it until it says Done.`)) return;
-      const bI = $('#fwinstall'); bI.disabled = true;
+      const bI = q('fwinstall'); bI.disabled = true; this.fwBusy = true;
+      if (this.mirror && this.mirror.on) { this.mirror.stop(); $('#mirrortoggle').checked = false; }
+      let ok = false;
       try {
         log('Downloading and checking the package…');
         const pkg = await FW.fetchPackage(m);
@@ -315,11 +339,17 @@ class App {
         let lastStep = '';
         await FW.install(access, pkg, (step, n) => {
           if (step !== lastStep) { lastStep = step; log((FW.STEP_TEXT[step] || step) + (typeof n === 'string' ? ` (${n})` : '')); }
-          else if (typeof n === 'number' && n % 50 === 0) $('#fwlog').lastChild.textContent = `${FW.STEP_TEXT[step] || step}… ${n}`;
+          else if (typeof n === 'number' && n % 50 === 0) q('fwlog').lastChild.textContent = `${FW.STEP_TEXT[step] || step}… ${n}`;
         });
-        log(`Done: SLOOP ${m.version} is installed.`, 'ok');
-      } catch (e) { log((e.message || String(e)) + (e.detail ? ' ' + e.detail : ''), 'err'); }
-      setTimeout(async () => { try { await this.hw.connect(); } catch (_) {} this.fwPanel(); this.updateBar(); }, 2500);
+        log(`Done: SLOOP ${m.version} is installed.`, 'ok'); ok = true;
+      } catch (e) { log((e.message || String(e)) + (e.detail ? ' ' + e.detail : ''), 'err'); bI.disabled = false; }
+      setTimeout(async () => {
+        try { await this.hw.connect(); } catch (_) {}
+        this.fwBusy = false;
+        if (!compact) this.fwUpdater(el, compact);
+        this.fwPanel(); this.updateBar();
+        if (ok && compact) setTimeout(() => this.dockFw(), 8000);    // (the Done line stays a moment, then the card goes)
+      }, 2500);
     };
   }
 
