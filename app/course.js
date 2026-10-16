@@ -66,6 +66,7 @@ class App {
     $('#mirrorsound').onchange = (e) => this.virt.mute(this.mirror.on && !e.target.checked);
     this.hw.addEventListener('state', () => {
       const on = this.hw.state === 'on';
+      if (on) this.watchHwKnobs();
       $('#mirrorbar').hidden = !on;
       if (!on && this.mirror.on) { this.mirror.stop(); $('#mirrortoggle').checked = false; }
       if (!on && this.usbAudio.on && this.hw.state !== 'updating') { this.usbAudio.stop(); $('#usbaudio').checked = false; }
@@ -113,6 +114,24 @@ class App {
       this.toast(`Connected: SLOOP ${info.num} on ${this.hw.name}`);
     } catch (e) { this.toast(e.message); }
     this.updateBar();
+  }
+  // your FM-1's knobs: the parameter changes it pushes (WATCH), as knob turns for the steps that ask for one
+  watchHwKnobs() {
+    const link = this.hw.link;
+    if (!link || this.hwKnobLink === link) return;
+    this.hwKnobLink = link;
+    const ROLES = { LVL: [4], LEN: [5, 6], PAN: [6], REV: [6], SWG: [3], BPM: [0] };
+    const ready = (async () => {
+      if (!link.inf) await link.info();
+      if (!link.descs) await link.loadDescs('v' + link.inf.version + '-' + link.inf.pCount + '-' + link.inf.gCount);
+    })().catch(() => {});
+    link.on(async (cmd, a) => {
+      if (cmd !== 23 && cmd !== 32) return;                // CHANGED (scope, id), TRACK_CHANGED (track, id)
+      await ready;
+      const d = link.descs && (cmd === 23 && a[0] === 1 ? link.descs.g : link.descs.p)[a[1]];
+      for (const role of (d && ROLES[d.label]) || []) this.S.record({ what: 'knob', id: role, src: 'hw' });
+      this.recheck();
+    });
   }
   onHwMidi(d) {
     const st = d[0] & 0xF0, ch = (d[0] & 15) + 1;
