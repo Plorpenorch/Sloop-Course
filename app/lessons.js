@@ -125,7 +125,7 @@ export const MODULES = [
           { text: `Tap ${k('ENV')}: the envelope page opens.`, check: ({ S }) => /^ENV/.test(S.stat.page), show: ['ENV'] },
           { text: `Turn ${k('SELECT')} one click: the next page of ENV.`, check: ({ S }) => S.stat.page === 'ENV DEST', show: ['SELECT'] },
           { text: `Tap ${k('HOME')}: back to TRACKS.`, check: ({ S }) => S.stat.page === 'TRACKS' && S.stat.layer === 0, show: ['HOME'] },
-          { text: `Lock the FX layer: hold ${k('FX')}, tap ${k('HOME')}, let go of FX. The FX tiles stay. Then tap FX to unlock.`, check: ({ S }) => S.sawLocked('FX'), show: ['FX', 'HOME'], hint: 'Keep FX held while you tap HOME, then release FX. The screen says LOCK.', virtualOnly: true },
+          { text: `Lock the FX layer: hold ${k('FX')}, tap ${k('HOME')}, let go of FX. The FX tiles stay. Then tap FX to unlock.`, check: ({ S }) => S.sawLocked('FX'), show: ['FX', 'HOME'], hint: 'Keep FX held while you tap HOME, then release FX. The screen says LOCK. This step is checked on the virtual FM-1 (your FM-1 does not report its layers): did it on yours? Click the circle to tick it.', virtualOnly: true },
         ],
       },
       {

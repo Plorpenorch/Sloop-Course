@@ -262,7 +262,7 @@ class App {
       for (let i = 0; i < l.steps.length; i++) {
         const s = l.steps[i];
         if (p[i] || !s.check || this.current !== l) continue;
-        if (s.virtualOnly && this.checkedKind() !== 'virtual') continue;
+        if (s.virtualOnly && !this.virt.on) continue;     // (checked on the virtual FM-1, even with yours connected)
         let ok = false;
         try { ok = await s.check({ S: this.S }); } catch (_) { ok = false; }
         if (ok && this.current === l) this.setStep(i, true);
