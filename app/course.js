@@ -49,7 +49,11 @@ class App {
     this.hw.addEventListener('midi', (ev) => this.onHwMidi(ev.data));
     $('#connect').onclick = () => this.connectHw();
     this.mirror = new Mirror(this);
-    this.mirror.addEventListener('status', () => { $('#mirrorstat').textContent = this.mirror.text || ''; });
+    this.mirror.addEventListener('status', () => {
+      const el = $('#mirrorstat'); el.textContent = this.mirror.text || '';
+      if (this.mirror.on && !this.mirror.busy && this.mirror.panelOn === false && this.mod && this.mod.status === 'built')   // the way to the full mirror
+        { el.insertAdjacentHTML('beforeend', ' · <a href="#lesson/firmware" class="expfwlink">Follow every screen: experimental firmware</a>'); $('.expfwlink', el).onclick = () => this.showExpFw(); }
+    });
     $('#mirrortoggle').onchange = async (e) => {
       store.set('mirror', e.target.checked);
       if (e.target.checked) { try { await this.mirror.start(); } catch (err) { e.target.checked = false; this.toast(err.message); } }
@@ -293,6 +297,8 @@ class App {
 
   // ---- firmware: backup and update (the lesson "firmware", and the dock when a connected FM-1 is behind)
   fwPanel() { const el = $('#fwpanel'); if (el) this.fwUpdater(el, false); }
+  // (the mirror's link opens the firmware lesson with the experimental firmware shown)
+  showExpFw() { store.set('expfw', true); }
   fwOld() { const h = this.hw, m = this.manifest; return h.state === 'on' && m && h.info && FW.cmpVersion(h.info.num, m.version) < 0; }
   dockFw() {
     const el = $('#fwdock'), m = this.manifest, h = this.hw;
