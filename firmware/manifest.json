@@ -1,13 +1,13 @@
 {
-  "version": "2.7",
-  "tag": "v2.7",
-  "file": "sloop-2.7.fwsc",
+  "version": "2.7.1",
+  "tag": "v2.7.1",
+  "file": "sloop-2.7.1.fwsc",
   "size": 610035,
-  "sha256": "194a254cc4df80e27b52efee58821c304391c1c0c4df8d61fa23c2c246f8c9b3",
+  "sha256": "7c9d269d15d1c1a48e0ebada7ffa2c2aa196c19d51056fd3f760d322322b335f",
   "product": "FM-1_900",
-  "published": null,
-  "source": "https://github.com/isod89/sloop-fm1/releases/download/v2.7/sloop-2.7.fwsc",
-  "release": "https://github.com/isod89/sloop-fm1/releases/tag/v2.7",
+  "published": "2026-10-16T16:22:37Z",
+  "source": "https://github.com/isod89/sloop-fm1/releases/download/v2.7.1/sloop-2.7.1.fwsc",
+  "release": "https://github.com/isod89/sloop-fm1/releases/tag/v2.7.1",
   "prerelease": false,
-  "notes": ""
+  "notes": "SLOOP 2.7.1 is a fix for 2.7. If your FM-1 sometimes glitched and then showed a red **FELUCCA CRASH** screen and restarted, this is for you. Everything else is exactly 2.7.\r\n\r\n## Fixed\r\n\r\n- **The red FELUCCA CRASH screen after a glitch.** SLOOP 2.7 shares the sound between the FM-1's two processor cores. When the second core does not finish its share in time, SLOOP stops it and carries on with one core. Stopping it made the chip raise a false alarm, and with SLOOP's safety checks on, the FM-1 showed the crash screen and restarted. The second core is now stopped the safe way (after Felucca 1.6.1): you may hear a short glitch, and the music goes on, on one core until the next power-on (HOME held, ABOUT then says 1 CORE). Updating the firmware with the second core on now uses the same safe stop.\r\n- **A crash screen with more to read.** If a crash screen ever appears, it now also shows the stack and the second core's state (C1 3 = running, LATE = how many times it was late), and it stays 10 seconds, long enough to take a photo. Please send us that photo.\r\n\r\n## Install\r\n\r\nInstall from Chrome or Edge: https://isod89.github.io/sloop-fm1/ (make a backup with the web editor first). Your projects, presets, samples and settings stay. Coming from 2.7: nothing else changes.\r\n\r\nIf the crash still happens on your FM-1, the workaround is HOME held, SYSTEM, 2ND CORE OFF, then switch the FM-1 off and on: SLOOP then runs on one core, as 2.6 did. And please tell us, with the photo.\r\n\r\nThank you to the people who reported it, and to Leo Kuroshita for Felucca, where this safe stop comes from.\r\n"
 }
