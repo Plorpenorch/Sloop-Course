@@ -219,7 +219,7 @@ class App {
         <li class="step${p[si] ? ' done' : ''}${s.optional ? ' optional' : ''}" data-i="${si}">
           <button class="tick" title="${s.check ? 'Ticks itself when the FM-1 is right; click to tick by hand' : 'Tick when done'}" aria-label="done">${p[si] ? '✓' : ''}</button>
           <div class="stext">${s.text}${s.virtualOnly ? ' <span class="tag">virtual FM-1</span>' : ''}${s.optional ? ' <span class="tag dim">optional</span>' : ''}
-          ${/\bhold/i.test(s.text) ? '<div class="vtip">On the virtual FM-1: right-click or Shift+click a button to keep it held (long-press on a touchscreen). Click it again to let go.</div>' : ''}
+          ${/\bhold/i.test(s.text) ? '<div class="vtip">On the virtual FM-1: hold Shift and click a button to hold it; it stays held until you let go of Shift (on a touchscreen: long-press it, tap again to let go).</div>' : ''}
           ${s.hint ? `<details class="hint"><summary>Stuck?</summary>${s.hint}</details>` : ''}</div>
           ${s.check ? '<span class="auto" title="Checked automatically">auto</span>' : ''}</li>`).join('')}</ol>
       <div class="navrow">${prev ? `<a class="btn" href="#lesson/${prev.id}">← ${esc(prev.title)}</a>` : '<span></span>'}

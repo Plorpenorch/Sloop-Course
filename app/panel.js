@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // The FM-1's panel, drawn in HTML: the screen, 14 buttons, 7 knobs and MASTER, 27 keys. Pointer (mouse, pen,
-// multi-touch), wheel and computer-keyboard input; right-click, Shift+click or a long-press latches a button (or key) held; a click lets it go.
+// multi-touch), wheel and computer-keyboard input; Shift+click holds a button (or key) until Shift is let go; on a touchscreen a long-press holds it until the next tap.
 import { BUTTONS, KNOBS, KEY_NAMES, IS_BLACK, KEYMAP, B, K, paintScreen } from './fm1.js';
 
 const KNOB_COLOR = { 'KNOB 1': 't1', 'KNOB 2': 't2', 'KNOB 3': 't3', 'KNOB 4': 't4' };
@@ -57,6 +57,8 @@ export function buildPanel(root, fm1) {
 
   // ---- buttons and keys: pointer down / up, latching
   const latched = new Set();
+  const unlatch = (el) => { latched.delete(el); el._byShift = false; el.classList.remove('latched'); press(el, false); };
+  const dropShift = () => { for (const el of [...latched]) if (el._byShift) unlatch(el); };
   // a press lasts at least 60 ms, so a quick click is seen by the firmware's debounce as a tap
   const press = (el, down) => {
     const send = () => { if (el.dataset.b !== undefined) fm1.button(+el.dataset.b, down); else fm1.note(+el.dataset.n, down); };
@@ -72,8 +74,9 @@ export function buildPanel(root, fm1) {
       if (ev.button === 2) return;
       ev.preventDefault();
       el.setPointerCapture(ev.pointerId);
-      if (latched.has(el)) { latched.delete(el); el.classList.remove('latched'); press(el, false); return; }
-      if (ev.shiftKey) { lp = 'latched'; latched.add(el); el.classList.add('latched'); press(el, true); return; }   // Shift+click: held
+      if (latched.has(el)) { unlatch(el); return; }
+      // Shift+click: held while Shift stays down (the first one; other clicks with Shift down are taps)
+      if (ev.shiftKey && ![...latched].some((x) => x._byShift)) { lp = 'latched'; el._byShift = true; latched.add(el); el.classList.add('latched'); press(el, true); return; }
       press(el, true);
       if (ev.pointerType === 'touch' && el.dataset.b !== undefined) lp = setTimeout(() => { lp = 'latched'; latched.add(el); el.classList.add('latched'); navigator.vibrate?.(15); }, 550);
     });
@@ -85,11 +88,7 @@ export function buildPanel(root, fm1) {
     };
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
-    el.addEventListener('contextmenu', (ev) => {
-      ev.preventDefault();
-      if (latched.has(el)) { latched.delete(el); el.classList.remove('latched'); press(el, false); }
-      else { latched.add(el); el.classList.add('latched'); if (!el.classList.contains('down')) press(el, true); }
-    });
+    el.addEventListener('contextmenu', (ev) => ev.preventDefault());
   }
   // a slide along the keybed plays the keys it crosses (one pointer)
   // ---- knobs: drag, wheel, arrow keys; a detent per 14 px
@@ -144,9 +143,10 @@ export function buildPanel(root, fm1) {
     if (latched.has(el)) return;
     press(el, isDown);
   };
+  window.addEventListener('keyup', (ev) => { if (ev.key === 'Shift') dropShift(); });   // letting go of Shift lets go of the button
   window.addEventListener('keydown', (ev) => onKey(ev, true));
   window.addEventListener('keyup', (ev) => onKey(ev, false));
-  window.addEventListener('blur', () => { for (const el of root.querySelectorAll('.down')) if (!latched.has(el) && el.dataset.k === undefined) press(el, false); down.clear(); });
+  window.addEventListener('blur', () => { dropShift(); for (const el of root.querySelectorAll('.down')) if (!latched.has(el) && el.dataset.k === undefined) press(el, false); down.clear(); });
 
   return {
     canvas,
