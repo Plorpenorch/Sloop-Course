@@ -1,0 +1,16 @@
+{
+  "status": "built",
+  "version": "2.7.1 MIRROR",
+  "base": "2.7.1",
+  "file": "sloop-2.7.1-mirror.fwsc",
+  "size": 610035,
+  "sha256": "b0d731266a6e30295695b167c9a82831cd09fd4e328bc961e255c36a14299d25",
+  "product": "FM-1_900",
+  "pr": "https://github.com/isod89/sloop-fm1/pull/141",
+  "branch": "https://github.com/Plorpenorch/sloop-fm1/tree/panel-push",
+  "commits": [
+    "c5afa9bfc38757f193e1889ebe4ab42befa797f9",
+    "bb770ce411f54a0914162cdc0465a0cac4372862"
+  ],
+  "officialRebuildIdentical": true
+}
