@@ -208,3 +208,5 @@ ol.steps { list-style: none; padding: 0; counter-reset: st; }
 .blab { position: absolute; top: 38px; width: var(--bw); margin-left: 6px; text-align: center; font: 700 6.5px var(--sans); color: #b9bac0; letter-spacing: .2px; pointer-events: none; z-index: 2; }
 .key.black { height: 30px; }
 .fbtn.remote { transform: translateY(2px); box-shadow: 0 0 0 2px #79a8ff, 0 0 10px rgba(121,168,255,.6); }
+
+.expfw { margin-top: 14px; }

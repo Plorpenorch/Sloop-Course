@@ -10,6 +10,10 @@ on:
         description: "Rebuild even if the version did not change"
         type: boolean
         default: false
+      force_mod:
+        description: "Rebuild the experimental mirror firmware"
+        type: boolean
+        default: false
 permissions:
   contents: write
   issues: write
@@ -20,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Tools
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq clang lld
+          sudo apt-get update -qq && sudo apt-get install -y -qq clang lld xz-utils
           pip install --quiet pillow markdown
       - name: Check SLOOP's releases
         id: sync
@@ -51,3 +55,31 @@ jobs:
 
           Release: https://github.com/isod89/sloop-fm1/releases"
           fi
+      # the experimental mirror firmware: SLOOP's release + the PANEL push (pull request #141), tools/build_mod.py
+      - name: Mirror firmware (experimental)
+        id: mod
+        continue-on-error: true
+        run: python3 tools/build_mod.py ${{ inputs.force_mod && '--force' || '' }}
+      - name: Commit the mirror firmware
+        if: steps.mod.outputs.status == 'built' || steps.mod.outputs.status == 'merged'
+        run: |
+          git config user.name "sloop-course-sync"
+          git config user.email "actions@users.noreply.github.com"
+          python3 -c "import json,time;json.dump({'v':'mod-'+str(int(time.time()))},open('version.json','w'))"
+          git add -A firmware version.json
+          git commit -m "Mirror firmware: ${{ steps.mod.outputs.status }} for SLOOP ${{ steps.mod.outputs.base }}" || exit 0
+          git pull --rebase --quiet && git push
+      - name: Flag a mirror firmware problem
+        if: steps.mod.outcome == 'failure' || steps.mod.outputs.status == 'conflict'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STATUS: ${{ steps.mod.outputs.status }}
+          FILES: ${{ steps.mod.outputs.files }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          TITLE="Mirror firmware needs attention"
+          gh issue list --state open --search "$TITLE in:title" --json number --jq length | grep -qv '^0$' && exit 0
+          if [ "$STATUS" = conflict ]; then WHY="The mirror change (Plorpenorch/sloop-fm1, branch panel-push) no longer applies to the new SLOOP release; files in conflict: $FILES."; else WHY="The build or its tests failed."; fi
+          gh issue create --title "$TITLE" --body "$WHY The course keeps offering the previous mirror firmware (experimental, behind the setting). Rebase the branch panel-push onto the release (this also updates pull request isod89/sloop-fm1#141), then run this workflow with *Rebuild the experimental mirror firmware*.
+
+          Run: $RUN"

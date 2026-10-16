@@ -81,6 +81,7 @@ class App {
     window.addEventListener('beforeunload', () => this.saveVirtual(true));
     setInterval(() => this.saveVirtual(), 20000);
     try { this.manifest = await FW.manifest(); } catch (_) { this.manifest = null; }
+    try { this.mod = await FW.modManifest(); } catch (_) { this.mod = null; }
     const fv = document.getElementById('fwver'); if (fv && this.manifest) fv.textContent = ' ' + this.manifest.version;   // the SLOOP the course is on
     try { this.courseInfo = await (await fetch('data/course.json', { cache: 'no-cache' })).json(); } catch (_) { this.courseInfo = null; }
     this.route();
@@ -312,25 +313,40 @@ class App {
     $('#fwdno', el).onclick = () => { this.fwDismissed = key; el.hidden = true; };
     $('#fwdyes', el).onclick = () => { $('.fwdbtns', el).remove(); this.fwUpdater($('.fwdbody', el), true); };
   }
+  fwOnMod() { const h = this.hw; return h.state === 'on' && h.info && (/MIRROR/i.test(h.info.version) || ((h.watchBits || 0) & 4)); }
   fwUpdater(el, compact) {
-    const m = this.manifest, h = this.hw;
-    const dev = h.state === 'on' ? h.info.num : null;
+    const m = this.manifest, h = this.hw, mod = this.mod && this.mod.status === 'built' ? this.mod : null;
+    const exp = store.get('expfw', false) && !compact;
+    const dev = h.state === 'on' ? h.info.num : null, onMod = this.fwOnMod();
     const cur = m && dev && FW.cmpVersion(dev, m.version) >= 0;
+    const devTxt = dev ? esc(dev) + (onMod ? ' <span class="tag">mirror</span>' : '') : '—';
     el.innerHTML = `
       ${compact ? '' : `<div class="fwrow"><div><div class="wtitle">Newest SLOOP</div><div class="big">${m ? esc(m.version) : '—'}</div>
         ${m ? `<div class="sub"><a href="${esc(m.release)}" target="_blank" rel="noopener">release notes</a> · <a href="#whatsnew">what's new</a></div>` : ''}</div>
-      <div><div class="wtitle">Your FM-1</div><div class="big">${dev ? esc(dev) : '—'}</div><div class="sub">${dev ? (cur ? 'up to date' : 'update available') : 'not connected'}</div></div></div>`}
+      <div><div class="wtitle">Your FM-1</div><div class="big">${devTxt}</div><div class="sub">${dev ? (onMod ? 'mirror firmware (experimental)' : cur ? 'up to date' : 'update available') : 'not connected'}</div></div></div>`}
       <div class="fwactions">
         ${h.state === 'on' ? '' : '<button class="btn fwconnect">Connect your FM-1</button>'}
         <button class="btn fwbackup" ${h.state === 'on' ? '' : 'disabled'}>1 · Save a backup</button>
         <label class="confirm"><input type="checkbox" class="fwok"> I have a backup and the FM-1 is on a data cable, charged, with no other MIDI app open</label>
-        <button class="btn primary fwinstall" disabled>2 · Install SLOOP ${m ? esc(m.version) : ''}</button>
+        <button class="btn primary fwinstall" disabled>2 · ${onMod ? 'Return to official' : 'Install'} SLOOP ${m ? esc(m.version) : ''}</button>
+        ${exp && mod ? `<button class="btn fwinstallmod" disabled>2 · Install SLOOP ${esc(mod.version)} (experimental)</button>` : ''}
       </div>
+      ${compact ? '' : `<label class="confirm expfw"><input type="checkbox" class="fwexp" ${store.get('expfw', false) ? 'checked' : ''}> Show experimental firmware</label>`}
+      ${exp ? `<div class="callout warn"><span class="ctitle">Experimental: SLOOP + mirror</span>
+        ${mod ? `SLOOP ${esc(mod.base)} with one addition: it reports its buttons, keys, knobs and the page on screen, so the course's mirror follows every screen.
+        It is built automatically from SLOOP's own source plus <a href="${esc(mod.pr)}" target="_blank" rel="noopener">this proposed change</a>, and has not been tested on many FM-1s. It is not an official SLOOP release: report problems to the course, not to SLOOP.
+        To go back, install official SLOOP above (your work is kept either way).`
+        : this.mod && this.mod.status === 'merged' ? `The mirror is part of official SLOOP now: install official SLOOP above.` : `No experimental build is available for SLOOP ${m ? esc(m.version) : ''} yet.`}</div>` : ''}
       <div class="fwlog"></div>`;
     const q = (c) => $('.' + c, el);
     const log = (t, cls = '') => { q('fwlog').insertAdjacentHTML('beforeend', `<div class="${cls}">${esc(t)}</div>`); };
-    const sync = () => { q('fwinstall').disabled = !(h.state === 'on' && m && q('fwok').checked) || this.fwBusy; };
+    const sync = () => {
+      const can = h.state === 'on' && q('fwok').checked && !this.fwBusy;
+      q('fwinstall').disabled = !(can && m);
+      if (q('fwinstallmod')) q('fwinstallmod').disabled = !can;
+    };
     q('fwok').onchange = sync; sync();
+    if (q('fwexp')) q('fwexp').onchange = (e) => { store.set('expfw', e.target.checked); this.fwUpdater(el, compact); };
     if (q('fwconnect')) q('fwconnect').onclick = async () => { await this.connectHw(); this.fwUpdater(el, compact); };
     q('fwbackup').onclick = async () => {
       const b = q('fwbackup'); b.disabled = true;
@@ -345,14 +361,14 @@ class App {
       } catch (e) { b.textContent = '1 · Save a backup'; log(e.message, 'err'); }
       b.disabled = false;
     };
-    q('fwinstall').onclick = async () => {
-      if (!confirm(`Install SLOOP ${m.version} on your FM-1? Don't unplug it until it says Done.`)) return;
-      const bI = q('fwinstall'); bI.disabled = true; this.fwBusy = true;
+    const install = async (target, label, btn) => {
+      if (!confirm(`Install ${label} on your FM-1? Don't unplug it until it says Done.`)) return;
+      btn.disabled = true; this.fwBusy = true; sync();
       if (this.mirror && this.mirror.on) { this.mirror.stop(); $('#mirrortoggle').checked = false; }
       let ok = false;
       try {
         log('Downloading and checking the package…');
-        const pkg = await FW.fetchPackage(m);
+        const pkg = await FW.fetchPackage(target);
         log(`Package OK: ${pkg.product}, SHA-256 verified.`, 'ok');
         const access = h.access;
         h.release();
@@ -361,16 +377,19 @@ class App {
           if (step !== lastStep) { lastStep = step; log((FW.STEP_TEXT[step] || step) + (typeof n === 'string' ? ` (${n})` : '')); }
           else if (typeof n === 'number' && n % 50 === 0) q('fwlog').lastChild.textContent = `${FW.STEP_TEXT[step] || step}… ${n}`;
         });
-        log(`Done: SLOOP ${m.version} is installed.`, 'ok'); ok = true;
-      } catch (e) { log((e.message || String(e)) + (e.detail ? ' ' + e.detail : ''), 'err'); bI.disabled = false; }
+        log(`Done: ${label} is installed.`, 'ok'); ok = true;
+      } catch (e) { log((e.message || String(e)) + (e.detail ? ' ' + e.detail : ''), 'err'); }
       setTimeout(async () => {
         try { await this.hw.connect(); } catch (_) {}
         this.fwBusy = false;
-        if (!compact) this.fwUpdater(el, compact);
-        this.fwPanel(); this.updateBar();
+        if (!compact) this.fwUpdater(el, compact); else sync();
+        if (compact) this.fwPanel();
+        this.updateBar();
         if (ok && compact) setTimeout(() => this.dockFw(), 8000);    // (the Done line stays a moment, then the card goes)
       }, 2500);
     };
+    q('fwinstall').onclick = () => install(m, `SLOOP ${m.version}`, q('fwinstall'));
+    if (q('fwinstallmod')) q('fwinstallmod').onclick = () => install(mod, `SLOOP ${mod.version} (experimental)`, q('fwinstallmod'));
   }
 
   // ---- reference pages

@@ -10,6 +10,12 @@ export async function manifest() {
   if (!r.ok) throw new Error('no firmware manifest');
   return r.json();
 }
+// the experimental mirror build (tools/build_mod.py): firmware/mod.json
+export async function modManifest() {
+  const r = await fetch(new URL('../firmware/mod.json', import.meta.url), { cache: 'no-cache' });
+  if (!r.ok) return null;
+  return r.json();
+}
 export function cmpVersion(a, b) {
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
   for (let i = 0; i < Math.max(pa.length, pb.length); i++) { const d = (pa[i] || 0) - (pb[i] || 0); if (d) return Math.sign(d); }
