@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // The FM-1's panel, drawn in HTML: the screen, 14 buttons, 7 knobs and MASTER, 27 keys. Pointer (mouse, pen,
-// multi-touch), wheel and computer-keyboard input; right-click / long-press latches a button held.
+// multi-touch), wheel and computer-keyboard input; right-click, Shift+click or a long-press latches a button (or key) held; a click lets it go.
 import { BUTTONS, KNOBS, KEY_NAMES, IS_BLACK, KEYMAP, B, K, paintScreen } from './fm1.js';
 
 const KNOB_COLOR = { 'KNOB 1': 't1', 'KNOB 2': 't2', 'KNOB 3': 't3', 'KNOB 4': 't4' };
@@ -57,10 +57,14 @@ export function buildPanel(root, fm1) {
 
   // ---- buttons and keys: pointer down / up, latching
   const latched = new Set();
+  // a press lasts at least 60 ms, so a quick click is seen by the firmware's debounce as a tap
   const press = (el, down) => {
-    if (el.dataset.b !== undefined) fm1.button(+el.dataset.b, down);
-    else fm1.note(+el.dataset.n, down);
+    const send = () => { if (el.dataset.b !== undefined) fm1.button(+el.dataset.b, down); else fm1.note(+el.dataset.n, down); };
     el.classList.toggle('down', down);
+    clearTimeout(el._upT);
+    if (down) { el._downAt = performance.now(); send(); return; }
+    const left = 60 - (performance.now() - (el._downAt || 0));
+    if (left > 0) el._upT = setTimeout(send, left); else send();
   };
   for (const el of [...btnEls, ...keyEls]) {
     let lp = null;
@@ -69,6 +73,7 @@ export function buildPanel(root, fm1) {
       ev.preventDefault();
       el.setPointerCapture(ev.pointerId);
       if (latched.has(el)) { latched.delete(el); el.classList.remove('latched'); press(el, false); return; }
+      if (ev.shiftKey) { lp = 'latched'; latched.add(el); el.classList.add('latched'); press(el, true); return; }   // Shift+click: held
       press(el, true);
       if (ev.pointerType === 'touch' && el.dataset.b !== undefined) lp = setTimeout(() => { lp = 'latched'; latched.add(el); el.classList.add('latched'); navigator.vibrate?.(15); }, 550);
     });
@@ -82,7 +87,6 @@ export function buildPanel(root, fm1) {
     el.addEventListener('pointercancel', up);
     el.addEventListener('contextmenu', (ev) => {
       ev.preventDefault();
-      if (el.dataset.b === undefined) return;
       if (latched.has(el)) { latched.delete(el); el.classList.remove('latched'); press(el, false); }
       else { latched.add(el); el.classList.add('latched'); if (!el.classList.contains('down')) press(el, true); }
     });

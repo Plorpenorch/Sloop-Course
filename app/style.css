@@ -123,6 +123,7 @@ ol.steps { list-style: none; padding: 0; counter-reset: st; }
 .chip.ok { color: #bff3d6; border-color: #24603f; }
 .chip.warn { color: #ffdf9e; border-color: #6b4a12; }
 .docknote { font-size: 12px; color: var(--faint); }
+.vtip { font-size: 12px; color: var(--faint); margin-top: 4px; }
 #toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 30px); background: #20232f; border: 1px solid var(--line); color: var(--ink); padding: 10px 16px; border-radius: 10px; opacity: 0; transition: .25s; pointer-events: none; max-width: 90vw; z-index: 50; }
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
