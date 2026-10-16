@@ -80,6 +80,7 @@ class App {
     window.addEventListener('beforeunload', () => this.saveVirtual(true));
     setInterval(() => this.saveVirtual(), 20000);
     try { this.manifest = await FW.manifest(); } catch (_) { this.manifest = null; }
+    const fv = document.getElementById('fwver'); if (fv && this.manifest) fv.textContent = ' ' + this.manifest.version;   // the SLOOP the course is on
     try { this.courseInfo = await (await fetch('data/course.json', { cache: 'no-cache' })).json(); } catch (_) { this.courseInfo = null; }
     this.route();
     this.updateBar();
