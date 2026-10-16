@@ -5,7 +5,7 @@
 const HDR = [0xF0, 0x7D, 0x46, 0x4C];
 export const CMD = { INFO: 1, GET: 2, SET: 3, DUMP: 4, DESC: 5, STEP_GET: 6, STEP_SET: 7, PRESET: 8, PROJECT: 9, NAMES: 10,
   WATCH: 22, CHANGED: 23, RELOAD: 24, PING: 25, STEP_CHANGED: 26, TRACK: 27, TRACK_MIX: 28, TRACK_DUMP: 29, TRACK_STEP: 30,
-  TRACK_PARAM: 31, TRACK_CHANGED: 32, DRUM_STEP: 33, LOCK_GET: 37, MICRO_GET: 39, FILL_GET: 41, PANEL: 43 };
+  TRACK_PARAM: 31, TRACK_CHANGED: 32, DRUM_STEP: 33, LOCK_GET: 37, MICRO_GET: 39, FILL_GET: 41, PANEL: 43, LIVE: 77 };
 const PUSH = new Set([23, 24, 26, 32, 43]);
 export const v14 = (lo, hi) => (lo | hi << 7) - 8192;
 export const enc14 = (v) => { const u = (v + 8192) & 0x3FFF; return [u & 0x7F, u >> 7]; };

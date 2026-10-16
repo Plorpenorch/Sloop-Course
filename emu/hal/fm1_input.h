@@ -25,6 +25,7 @@ static volatile struct {
     int16_t enc_steps[FM1_NENC];
     uint32_t frames;
 } fm1_in;
+static volatile uint32_t fm1_remote_btn;   /* (2.7) buttons held over MIDI REMOTE */
 static uint8_t fm1_led[FM1_NCOL];
 static uint8_t fm1_led_dim[FM1_NCOL];
 static uint8_t fm1_led_bg[FM1_NCOL];

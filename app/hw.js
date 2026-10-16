@@ -56,7 +56,8 @@ export class HardwareFM1 extends EventTarget {
   }
   startWatch() {
     clearInterval(this.pinger);
-    this.link.watch(7).catch(() => {});      // 1 pushes, 2 the other tracks' mix, 4 the panel (v11)
+    // 1 pushes, 2 the other tracks' mix, 4 the panel (the PANEL push): the reply has the bits this SLOOP knows
+    this.watched = this.link.watch(7).then((b) => (this.watchBits = b), () => (this.watchBits = 0));
     this.pinger = setInterval(() => { if (this.link) this.link.ping().catch(() => {}); }, 1000);
   }
   lost() {

@@ -8,6 +8,7 @@
 #define FELUCCA_CDC 0
 #define FELUCCA_UART 0
 #define FELUCCA_UAC 0
+#define FELUCCA_CPU1 0         /* one core: the browser runs the render on its own thread */
 #include "fm1_time.h"
 #include "fm1_sys.h"
 #include "fm1_irq.h"
@@ -23,6 +24,7 @@
 #include "lcd.c"
 #include "gfx.c"
 #include "core.h"
+#include "cpu1.h"
 #include "engines.c"
 #include "drums.c"
 #include "params.c"
@@ -34,6 +36,7 @@
 #include "arranger.c"
 #include "seq.c"
 #include "audio.c"
+#include "cpu1.c"
 #include "panel.c"
 #include "ui.c"
 #include "ui_song.c"
@@ -44,8 +47,11 @@
 #include "ui_layers.c"
 #include "ui_menu.c"
 #include "ui_input.c"
+#define ST_SIDE_MAX 192u       /* (storage.c, not built here: project.c checks its side record against it) */
 #include "upreset.c"
 #include "project.c"
+static up_bank_t emu_up_bank;            /* (project.c's staging buffer is flash-only) */
+static void *up_stage(void) { return &emu_up_bank; }
 /* the editor protocol (web/EDITOR_PROTOCOL.md): replies go to a ring the page reads */
 #define EMU_TXN 8192u
 static uint32_t emu_tx[EMU_TXN], emu_tx_w, emu_tx_r;

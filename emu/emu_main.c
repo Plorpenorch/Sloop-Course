@@ -29,6 +29,10 @@ static void emu_felucca_init(void)              /* main.c felucca_init */
     song.g[G_ROUTE] = (int16_t)lights_min;
     song.g[G_CH1] = midi_set[0], song.g[G_CH2] = midi_set[1], song.g[G_CH3] = midi_set[2];
     song.g[G_DRCH] = midi_set[3], song.g[G_CHOTH] = midi_set[4], song.g[G_BEND] = midi_set[5];
+    song.g[G_FXCH] = midi_set[6];
+    song.g[G_DRMAP] = midi_set[7];
+    song.g[G_CLKOUT] = midi_set[9];
+    song.g[G_RMCH] = midi_set[8];
     layers_init();
     go_home();
     ui.force = 1;
@@ -179,7 +183,7 @@ EMU_EXPORT("emu_restore") uint32_t emu_restore(void)    /* emu_work (and the slo
 EMU_EXPORT("emu_playing") uint32_t emu_playing(void) { return song.playing; }
 EMU_EXPORT("emu_page") uint32_t emu_page(void) { return (uint32_t)ui.page | (uint32_t)ui.home << 8; }
 /* where the screen is, for the lessons: the page's title ("" on TRACKS), the layer held (LY_*), the menu */
-EMU_EXPORT("emu_page_name") const char *emu_page_name(void) { return ui.home ? "" : PAGES[ui.page].title; }
+EMU_EXPORT("emu_page_name") const char *emu_page_name(void) { return ui.home ? "" : vis_shown() ? "VISUALISER" : PAGES[ui.page].title; }
 EMU_EXPORT("emu_layer") uint32_t emu_layer(void) { return ui.layer == LY_PLAY ? 0u : (uint32_t)ui.layer + 1u; }
 EMU_EXPORT("emu_layer_btn") uint32_t emu_layer_btn(void) { return ui.layer_btn; }
 EMU_EXPORT("emu_bpm") uint32_t emu_bpm(void) { return (uint32_t)song.g[G_BPM]; }

@@ -68,10 +68,10 @@ export const MODULES = [
 <li>Turn ${k('MASTER')} all the way down: the speaker is silent, the computer still gets full sound. Set the volume on the computer.</li>
 </ol>
 <p>It stays set through power-off. Turn MASTER up again to use the speaker; set USB AUDIO back to MASTER to make the knob set both again.</p>
-<div class="callout"><span class="ctitle">If the course finds no FM-1 audio</span>On a Mac, SLOOP's HOME menu → AUDIO → <b>USB SERIAL</b> must stay <b>OFF</b> (the default), or macOS does not show the audio input: set it OFF, then switch the FM-1 off and on. Unplug and replug the cable once; close apps that hold the input (a DAW).</div>
+<div class="callout"><span class="ctitle">If the course finds no FM-1 audio</span>Unplug and replug the cable once, and close apps that hold the input (a DAW). If a phone or tablet records it distorted: HOME menu → AUDIO → <b>USB RATE</b> (KNOB 3) to <b>44.1 KHZ</b>, then switch the FM-1 off and on.</div>
 <h2>Mirror it on the virtual FM-1</h2>
 <p>Tick <b>Mirror my FM-1</b>: the virtual FM-1 copies your FM-1 (sounds, parameters, patterns, kit, selected track, tempo and settings), then follows every change. The keys you play light up on the drawing, and the knobs you turn move when SLOOP reports the value they change (level, swing, steps, pan, tempo, track, sound).</p>
-<p>The virtual one stays silent while it mirrors, so you hear your FM-1 only; tick <b>Hear the virtual one</b> to compare. The page or layer on your FM-1's screen and PLAY / STOP are not reported over USB, so the virtual screen can show another page than yours.</p>`,
+<p>The virtual one stays silent while it mirrors, so you hear your FM-1 only; tick <b>Hear the virtual one</b> to compare. SLOOP 2.7 reports PLAY / STOP, so the virtual one starts and stops with yours; the page or layer on your FM-1's screen is not reported, so the virtual screen can show another page than yours.</p>`,
         steps: [
           { text: 'Tick <b>Hear my FM-1</b> and play a few keys on your FM-1: you hear it through the computer.', check: ({ S }) => S.usbAudioOn },
           { text: 'Optional: USB AUDIO = FULL and MASTER down, for sound from the computer only.', optional: true },
@@ -139,7 +139,7 @@ export const MODULES = [
 <li>${k('PLAY')} starts and stops all four tracks; its light flashes on every beat.</li>
 </ul>`,
         steps: [
-          { text: `On TRACKS, turn ${k('SELECT')} to <b>100</b> BPM.`, check: async ({ S }) => (await S.bpm()) === 100, show: ['SELECT'] },
+          { text: `On TRACKS, turn ${k('SELECT')} to <b>100</b> BPM.`, check: async ({ S }) => (await S.bpm()) === 100, show: ['SELECT'], hint: 'Lines or waves on the screen instead of the tracks: HOME tapped on TRACKS opens the visualiser, where SELECT changes the picture. Tap HOME once more.' },
           { text: `Press ${k('PLAY')}, watch the playhead move, press it again to stop.`, check: ({ S }) => S.sawPlaying(), show: ['PLAY'] },
           { text: `Turn ${k('KNOB 2')} to change the selected track's level, and see its bar move.`, check: ({ S }) => S.turned(4), show: ['K2'] },
         ],
@@ -277,10 +277,10 @@ export const MODULES = [
         body: `
 <p class="lead">A warm soft-house beat at 116 BPM: Rhodes chords, a sub bass, a quiet guitar melody, swinging drums. Built entirely on the FM-1.</p>
 <p>The plan: drums (one bar, looping), then four bars of chords, bass and melody, then the mix. The drums are 16 steps and the other tracks 64: the drum bar loops four times under the progression.</p>
-<div class="callout warn"><span class="ctitle">On your FM-1</span>A new project empties the working loop. Saved sections A–D stay. Save first (SAVE + key 5–8) if you want to keep what is there.</div>`,
+<div class="callout warn"><span class="ctitle">On your FM-1</span>A new project empties the working loop (the screen says <i>NEW LOOP, A-D KEPT</i>). Saved sections A–D stay. Save first (SAVE + key 5–8) if you want to keep what is there.</div>`,
         steps: [
-          { text: `New project: tap ${k('SAVE')} on a page other than TRACKS (tap ENV first), turn ${k('SELECT')} to <b>TOOLS</b>, turn ${k('KNOB 4')} NEW one click, then another within about 1.5 s.`, check: async ({ S }) => S.emptyProject(), show: ['SAVE', 'SELECT', 'K4'], hint: 'On TRACKS, SAVE opens the SONG screen instead: tap ENV, then SAVE. The SAVE pages are PRESETS, USER, PROJECT and TOOLS: SELECT moves between them. NEW asks for a second click to confirm.' },
-          { text: `${k('HOME')}, then ${k('SELECT')} to <b>116</b> BPM.`, check: async ({ S }) => (await S.bpm()) === 116, show: ['HOME', 'SELECT'] },
+          { text: `New project: tap ${k('SAVE')} on a page other than TRACKS (tap ENV first), turn ${k('SELECT')} to <b>TOOLS</b>, turn ${k('KNOB 4')} NEW one click, then another within about 1.5 s.`, check: async ({ S }) => S.emptyProject(), show: ['SAVE', 'SELECT', 'K4'], hint: 'On TRACKS, SAVE opens the SONG screen instead: tap ENV, then SAVE. The SAVE pages are PRESETS, USER, SECTION and TOOLS: SELECT moves between them. NEW asks for a second click to confirm.' },
+          { text: `${k('HOME')}, then ${k('SELECT')} to <b>116</b> BPM.`, check: async ({ S }) => (await S.bpm()) === 116, show: ['HOME', 'SELECT'], hint: 'Lines or waves on the screen instead of the tracks: HOME tapped on TRACKS opens the visualiser, where SELECT changes the picture. Tap HOME once more.' },
           { text: `Track 4, on TRACKS: ${k('PRESETS')} to the <b>D.HOUSE</b> kit.`, check: async ({ S }) => (await S.kit()) === 'D.HOUSE', show: ['ALGORITHM', 'PRESETS'] },
           { text: '<i>Optional, on your FM-1:</i> SLOOP\'s web editor has a <b>Drum synth</b> page to make a softer copy of D.HOUSE (kick CLICK down, shorter clap and open hat). It needs the editor, so it is not checked here.', optional: true },
         ],

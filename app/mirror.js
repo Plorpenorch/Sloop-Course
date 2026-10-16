@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Mirror: the virtual FM-1 follows your FM-1. A full copy first (every track's sound and parameters, the
 // patterns, the drum kit, the selected track, the global settings), then every change the FM-1 reports
-// (WATCH pushes), and the notes its keys send. What the editor protocol does not report (the page or layer
-// on screen, PLAY / STOP) cannot be mirrored.
+// (WATCH pushes), and the notes its keys send. A SLOOP with the PANEL push also sends its buttons, keys and knob
+// detents, so the virtual one walks the same pages; SLOOP 2.7 (LIVE) without it reports PLAY / STOP, polled.
 import { CMD, enc14, SloopLink } from './link.js';
 
 // globals that are actions or FM-1 settings, never copied (they would act on the virtual one)
@@ -29,14 +29,20 @@ export class Mirror extends EventTarget {
     this.onMidi = (ev) => this.note(ev.data);
     this.app.hw.addEventListener('midi', this.onMidi);
     await this.fullSync();
-    this.panelOn = (this.hw.inf.proto || 0) >= 11;
+    await this.app.hw.watched;
+    this.panelOn = !!((this.app.hw.watchBits || 0) & 4);      // (the WATCH reply: bit 2, the PANEL push)
     if (this.panelOn) { try { this.pn = SloopLink.panel(await this.hw.request(CMD.PANEL)); } catch (_) { this.panelOn = false; } }
-    this.status(this.panelOn ? 'Mirroring your FM-1: screen, keys, knobs and buttons' : 'Mirroring your FM-1 (sounds, patterns, notes; this SLOOP does not report its buttons)');
+    this.liveOn = !this.panelOn && (this.hw.inf.proto || 0) >= 12;
+    if (this.liveOn) this.liveT = setInterval(() => this.live(), 250);
+    this.status(this.panelOn ? 'Mirroring your FM-1: screen, keys, knobs and buttons'
+      : this.liveOn ? 'Mirroring your FM-1: sounds, patterns, notes, PLAY / STOP (this SLOOP does not report its other buttons)'
+      : 'Mirroring your FM-1 (sounds, patterns, notes; this SLOOP does not report its buttons)');
   }
   stop() {
     if (!this.on) return;
     this.on = false;
     if (this.off) this.off();
+    clearInterval(this.liveT);
     this.app.hw.removeEventListener('midi', this.onMidi);
     this.app.virt.mute(false);
     this.status('');
@@ -151,6 +157,19 @@ export class Mirror extends EventTarget {
     if (p.master >= 0 && p.master !== prev.master) panel?.remoteMaster(Math.sqrt(Math.min(4096, p.master) / 4096));
     this.pn = p;
     this.status('Mirroring your FM-1 · ' + (p.menu ? 'menu' : p.title || 'TRACKS') + (p.playing ? ' · playing' : ''));
+  }
+  // SLOOP 2.7 (LIVE): PLAY / STOP as your FM-1's (byte 1 of the state: bit 0 playing)
+  async live() {
+    if (!this.on || this.busy || this.livePending) return;
+    this.livePending = true;
+    try {
+      const a = await this.hw.request(CMD.LIVE, [0], 400);
+      const play = a[1] & 1;
+      if (play !== this.livePlay) {
+        if (this.livePlay !== undefined || play) await this.vl.request(CMD.LIVE, [1, play], 400).catch(() => {});
+        this.livePlay = play;
+      }
+    } catch (_) { /* busy: the next poll */ } finally { this.livePending = false; }
   }
   // the notes your FM-1's keys send: played on the virtual one too (its screen and keys light up)
   note(d) {
