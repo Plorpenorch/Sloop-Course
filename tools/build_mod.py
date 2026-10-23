@@ -119,6 +119,10 @@ def main():
     pub = (FW / man["file"]).read_bytes()
     same = hashlib.sha256(official).hexdigest() == hashlib.sha256(pub).hexdigest()
     print(f"official rebuild: {'identical to the release' if same else 'DIFFERS from the release'}")
+    diff = [i for i in range(min(len(official), len(pub))) if official[i] != pub[i]]
+    rebuild = {"identical": same, "size": len(official), "sha256": hashlib.sha256(official).hexdigest(),
+               "bytesDiffering": len(diff) + abs(len(official) - len(pub)),
+               "firstDiff": hex(diff[0]) if diff else None, "lastDiff": hex(diff[-1]) if diff else None}
     git(src, "reset", "--hard", "--quiet")
     git(src, "clean", "-fdxq")
 
@@ -158,7 +162,7 @@ def main():
     (FW / name).write_bytes(pkg)
     mod = {"status": "built", "version": f"{ver} MIRROR", "base": ver, "file": name, "size": len(pkg),
            "sha256": hashlib.sha256(pkg).hexdigest(), "product": product, "pr": PR,
-           "branch": f"{FORK}/tree/{BRANCH}", "commits": commits, "officialRebuildIdentical": same}
+           "branch": f"{FORK}/tree/{BRANCH}", "commits": commits, "officialRebuildIdentical": same, "officialRebuild": rebuild}
     MOD.write_text(json.dumps(mod, indent=2) + "\n")
     out("built", base=ver)
 
