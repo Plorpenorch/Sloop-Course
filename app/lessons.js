@@ -133,7 +133,7 @@ export const MODULES = [
         body: `
 <p class="lead">${k('HOME')} is the performance view: tempo, transport, and the four tracks with their sound, steps and level.</p>
 <ul>
-<li>The big number is the <b>tempo</b>. On TRACKS, ${k('SELECT')} sets it (inside a layer too).</li>
+<li>The big number is the <b>tempo</b>. On TRACKS, ${k('SELECT')} sets it (inside most layers too; with FX held it sets the punch-in fade instead).</li>
 <li>Each track row: its sound and engine, its steps (the playhead moves along them), its level bar.</li>
 <li>The four dials: <b>SWING · LEVEL · STEPS · PAN</b> of the selected track, on KNOB 1–4.</li>
 <li>${k('PLAY')} starts and stops all four tracks; its light flashes on every beat.</li>
@@ -260,7 +260,7 @@ export const MODULES = [
 <ul><li>${k('PRESETS')}: 153 sounds by kind (bass, keys, organ, pad, lead, pluck, stab, FX); the engine follows. It browses on the TRACKS screen (and the SAVE → PRESETS page), so tap HOME first.</li>
 <li><b>ENV</b> (tap): attack, decay, sustain, release: how a note starts and fades.</li>
 <li><b>EDIT</b> (tap): the engine's own controls, filter included.</li>
-<li><b>FX</b> (tap): drive and the sends to chorus, delay and reverb; then FILTER (one knob: left low-pass, right high-pass), INSERT.</li></ul>
+<li><b>FX</b> (tap): drive and the sends to chorus, delay and reverb; then FILTER (one knob: left low-pass, right high-pass; on the drums too), INSERT.</li></ul>
 <p>Changing a sound never changes the pattern, the key or the mix of its track.</p>`,
         steps: [
           { text: `On TRACKS, select track 2 and turn ${k('PRESETS')} to <b>M1 PIANO</b>.`, check: async ({ S }) => (await S.preset(1)) === 'M1 PIANO', show: ['ALGORITHM', 'PRESETS'] },
@@ -435,7 +435,7 @@ export const MODULES = [
 <h3>If something goes wrong</h3>
 <ul><li><b>Interrupted:</b> the FM-1 stays in update mode. Press Install again: it finishes.</li>
 <li><b>USB rescue:</b> hold ${k('OCT−')} alone while switching on (SLOOP USB RESCUE), then install again.</li>
-<li><b>Back to the official firmware:</b> SLOOP's installer page has <i>Return to the official firmware (V15)</i>.</li></ul>`,
+<li><b>Back to M-VAVE's own firmware:</b> use M-VAVE's updater, M-UPGRADE (from SLOOP 2.8 the in-browser return was removed: it was not reliable on every computer).</li></ul>`,
         steps: [
           { text: 'Connect your FM-1.', check: ({ S }) => S.hwOn },
           { text: 'Save a backup file.', check: ({ S }) => S.flag('backup') },
