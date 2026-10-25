@@ -32,6 +32,7 @@ export class Mirror extends EventTarget {
     await this.app.hw.watched;
     this.panelOn = !!((this.app.hw.watchBits || 0) & 4);      // (the WATCH reply: bit 2, the PANEL push)
     if (this.panelOn) { try { this.pn = SloopLink.panel(await this.hw.request(CMD.PANEL)); } catch (_) { this.panelOn = false; } }
+    if (this.panelOn) this.fixI = setInterval(() => this.fix(0), 1500);   // (a screen out of step is put right while you are still too)
     this.liveOn = !this.panelOn && (this.hw.inf.proto || 0) >= 12;
     if (this.liveOn) this.liveT = setInterval(() => this.live(), 250);
     this.status(this.panelOn ? 'Mirroring your FM-1: screen, keys, knobs and buttons'
@@ -42,7 +43,7 @@ export class Mirror extends EventTarget {
     if (!this.on) return;
     this.on = false;
     if (this.off) this.off();
-    clearInterval(this.liveT);
+    clearInterval(this.liveT); clearInterval(this.fixI); clearTimeout(this.fixT);
     this.app.hw.removeEventListener('midi', this.onMidi);
     this.app.virt.mute(false);
     this.status('');
@@ -156,6 +157,7 @@ export class Mirror extends EventTarget {
     p.knobs.forEach((n, role) => { if (n) { v.turn(role, n); panel?.remoteKnob(role, Math.sign(n)); } });
     if (p.master >= 0 && p.master !== prev.master) panel?.remoteMaster(Math.sqrt(Math.min(4096, p.master) / 4096));
     this.pn = p;
+    clearTimeout(this.fixT); this.fixT = setTimeout(() => this.fix(0), 400);
     this.status('Mirroring your FM-1 · ' + (p.menu ? 'menu' : p.title || 'TRACKS') + (p.playing ? ' · playing' : ''));
   }
   // SLOOP 2.7 (LIVE): PLAY / STOP as your FM-1's (byte 1 of the state: bit 0 playing)
@@ -170,6 +172,19 @@ export class Mirror extends EventTarget {
         this.livePlay = play;
       }
     } catch (_) { /* busy: the next poll */ } finally { this.livePending = false; }
+  }
+  // a press the virtual one missed leaves it on another screen, and HOME (TRACKS <-> visualiser) then keeps them
+  // flipped: once your FM-1 is still, put the virtual one where yours is (HOME taps), checked again after each tap
+  fix(n) {
+    const p = this.pn, v = this.app.virt;
+    if (!this.on || this.busy || !p || p.menu || p.buttons || p.keys || p.layer || n > 2) return;
+    const vs = v.stat, vVis = vs.page === 'VISUALISER';
+    if (!p.visKnown) return;                             // (an older mirror firmware: no visualiser bit)
+    const wrong = p.vis !== vVis || (!p.vis && p.title === 'TRACKS' && vs.page !== 'TRACKS');
+    if (!wrong || vs.layer) return;
+    v.button(6, true);
+    setTimeout(() => v.button(6, false), 80);
+    this.fixT = setTimeout(() => this.fix(n + 1), 500);
   }
   // the notes your FM-1's keys send: played on the virtual one too (its screen and keys light up)
   note(d) {

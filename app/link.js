@@ -129,7 +129,7 @@ export class SloopLink {
     for (let i = 0; i < 7; i++) knobs.push(r.u8() - 64);
     const layer = r.u8(), f = r.u8(), page = r.u8(), title = r.str();
     const master = r.left >= 2 ? r.u8() | r.u8() << 7 : -1;          // (0..4096, the pot's position squared)
-    return { buttons, keys, knobs, layer, home: !!(f & 1), menu: !!(f & 2), playing: !!(f & 4), page, title, master };
+    return { buttons, keys, knobs, layer, home: !!(f & 1), menu: !!(f & 2), playing: !!(f & 4), vis: !!(f & 8), visKnown: !!(f & 16), page, title, master };
   }
   async watch(on) { const r = await this.request(CMD.WATCH, [on]); return r[0]; }
   async ping() { return this.request(CMD.PING, [], 500); }
