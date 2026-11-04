@@ -1,10 +1,10 @@
 {
   "status": "built",
-  "version": "2.8.4 MIRROR",
-  "base": "2.8.4",
-  "file": "sloop-2.8.4-mirror.fwsc",
-  "size": 610052,
-  "sha256": "d86849305ea5a691c14b4ebc4dee359fba69bb95f5d956f4e756ad2ca166fd7a",
+  "version": "2.8.5 MIRROR",
+  "base": "2.8.5",
+  "file": "sloop-2.8.5-mirror.fwsc",
+  "size": 610076,
+  "sha256": "ba8b26ef3fc86c0ef7695a4a90337bd99e4bf10a004fa6237e8f4ee5ab645a07",
   "product": "FM-1_900",
   "pr": "https://github.com/isod89/sloop-fm1/pull/141",
   "branch": "https://github.com/Plorpenorch/sloop-fm1/tree/panel-push",
@@ -16,8 +16,8 @@
   "officialRebuildIdentical": true,
   "officialRebuild": {
     "identical": true,
-    "size": 610052,
-    "sha256": "5a6a0843c868650dba6718cf85e43e719aec18c3dc5cc803c57c38b382158d4e",
+    "size": 610076,
+    "sha256": "b0446effb840740a3aa5c386ce004e79334e4f833d48d82a9eb5edbfde92ae67",
     "bytesDiffering": 0,
     "firstDiff": null,
     "lastDiff": null
